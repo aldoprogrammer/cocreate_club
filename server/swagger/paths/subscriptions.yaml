@@ -1,0 +1,111 @@
+/subscriptions:
+  get:
+    tags:
+      - Subscriptions
+    summary: Get all subscriptions
+    responses:
+      "200":
+        description: A list of subscriptions
+        content:
+          application/json:
+            schema:
+              type: array
+              items:
+                type: object
+
+  post:
+    tags:
+      - Subscriptions
+    summary: Create a subscription
+    requestBody:
+      required: true
+      content:
+        application/json:
+          schema:
+            type: object
+            properties:
+              title:
+                type: string
+              price:
+                type: number
+              member_id:
+                type: array
+                items:
+                  type: string
+    responses:
+      "201":
+        description: Created
+        content:
+          application/json:
+            schema:
+              type: array
+              items:
+                type: object
+
+/subscriptions/{id}:
+  get:
+    tags:
+      - Subscriptions
+    summary: Get a subscription by ID
+    parameters:
+      - in: path
+        name: id
+        required: true
+        schema:
+          type: integer
+    responses:
+      "200":
+        description: Subscription details
+        content:
+          application/json:
+            schema:
+              type: object
+
+  put:
+    tags:
+      - Subscriptions
+    summary: Update a subscription
+    parameters:
+      - in: path
+        name: id
+        required: true
+        schema:
+          type: integer
+    requestBody:
+      required: true
+      content:
+        application/json:
+          schema:
+            type: object
+            properties:
+              title:
+                type: string
+              price:
+                type: number
+              member_id:
+                type: array
+                items:
+                  type: string
+    responses:
+      "200":
+        description: Updated
+        content:
+          application/json:
+            schema:
+              type: array
+              items:
+                type: object
+
+  delete:
+    tags:
+      - Subscriptions
+    summary: Delete a subscription
+    parameters:
+      - in: path
+        name: id
+        required: true
+        schema:
+          type: integer
+    responses:
+      "204":
+        description: Deleted

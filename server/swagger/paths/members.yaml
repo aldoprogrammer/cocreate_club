@@ -1,0 +1,103 @@
+/members:
+  get:
+    tags:
+      - Members
+    summary: Get all members
+    responses:
+      '200':
+        description: A list of members
+        content:
+          application/json:
+            schema:
+              type: array
+              items:
+                type: object
+
+  post:
+    tags:
+      - Members
+    summary: Create a member
+    requestBody:
+      required: true
+      content:
+        application/json:
+          schema:
+            type: object
+            properties:
+              name:
+                type: string
+              email:
+                type: string
+    responses:
+      '201':
+        description: Created
+        content:
+          application/json:
+            schema:
+              type: array
+              items:
+                type: object
+
+/members/{id}:
+  get:
+    tags:
+      - Members
+    summary: Get a member by ID
+    parameters:
+      - in: path
+        name: id
+        required: true
+        schema:
+          type: integer
+    responses:
+      '200':
+        description: Member details
+        content:
+          application/json:
+            schema:
+              type: object
+
+  put:
+    tags:
+      - Members
+    summary: Update a member
+    parameters:
+      - in: path
+        name: id
+        required: true
+        schema:
+          type: integer
+    requestBody:
+      required: true
+      content:
+        application/json:
+          schema:
+            type: object
+            properties:
+              name:
+                type: string
+              email:
+                type: string
+    responses:
+      '200':
+        description: Updated
+        content:
+          application/json:
+            schema:
+              type: array
+              items:
+                type: object
+
+  delete:
+    tags:
+      - Members
+    summary: Delete a member
+    parameters:
+      - in: path
+        name: id
+        required: true
+        schema:
+          type: integer
+    responses:
+      '204':
+        description: Deleted

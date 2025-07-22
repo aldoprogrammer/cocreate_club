@@ -6,8 +6,9 @@ import { getNFT } from "thirdweb/extensions/erc1155";
 import { etherlinkTestnet } from "@/lib/etherlinkChain";
 import { client } from "@/app/client";
 
-const CONTRACT_ADDRESS = "0xf51e2E32821509771b212734dC594Cea5f89D634";
-const TOKEN_ID = 2n;
+const CONTRACT_ADDRESS = process.env.NEXT_PUBLIC_CONTRACT_ADDRESS!;
+
+const TOKEN_ID = 4n;
 
 const convertIpfsUrl = (ipfsUrl: string) => {
   if (ipfsUrl?.startsWith('ipfs://')) {

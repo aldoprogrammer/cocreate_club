@@ -1,101 +1,83 @@
-# D:\Hiburan\tutor\Etherlink\cocreate_club\server\swagger\paths\users.yaml
-paths:
-  /users:
-    get:
-      tags:
-        - Users
-      summary: Get all users
-      description: Retrieve a list of all users in the system
-      responses:
-        '200':
-          description: A list of users
-          content:
-            application/json:
-              schema:
-                type: array
-                items:
-                  $ref: '#/components/schemas/User'
-        '500':
-          description: Internal server error
-          content:
-            application/json:
-              schema:
-                $ref: '#/components/schemas/Error'
-    
-    post:
-      tags:
-        - Users
-      summary: Create a new user
-      description: Register a new user with wallet address and role
-      requestBody:
-        required: true
-        content:
-          application/json:
-            schema:
-              type: object
-              properties:
-                wallet_address:
-                  type: string
-                  description: User's wallet address
-                  example: "0x71C7656EC7ab88b098defB751B7401B5f6d8976F"
-                role:
-                  type: string
-                  description: User role (audience/creator)
-                  enum: [audience, creator]
-                  default: audience
-      responses:
-        '201':
-          description: User created successfully
-          content:
-            application/json:
-              schema:
-                $ref: '#/components/schemas/User'
-        '400':
-          description: Bad request
-          content:
-            application/json:
-              schema:
-                $ref: '#/components/schemas/Error'
+/users/register:
+  post:
+    tags:
+      - Users
+    summary: Register a new user
+    requestBody:
+      required: true
+      content:
+        application/json:
+          schema:
+            type: object
+            properties:
+              fullName:
+                type: string
+                example: John Doe
+              email:
+                type: string
+                example: john@example.com
+              password:
+                type: string
+                example: password123
+              walletAddress:
+                type: string
+                example: 0x71C7656EC7ab88b098defB751B7401B5f6d8976F
+              role:
+                type: string
+                enum: [audience, creator]
+                example: audience
+    responses:
+      201:
+        description: User registered successfully
+      400:
+        description: Bad request
 
-components:
-  schemas:
-    User:
-      type: object
-      properties:
-        id:
-          type: string
-          format: uuid
-          description: Unique user ID
-        wallet_address:
-          type: string
-          description: Ethereum wallet address
-        role:
-          type: string
-          enum: [audience, creator]
-          description: User role
-        created_at:
-          type: string
-          format: date-time
-          description: Timestamp of user creation
-      example:
-        id: "123e4567-e89b-12d3-a456-426614174000"
-        wallet_address: "0x71C7656EC7ab88b098defB751B7401B5f6d8976F"
-        role: "audience"
-        created_at: "2023-01-01T00:00:00Z"
+/users/login:
+  post:
+    tags:
+      - Users
+    summary: Login user
+    requestBody:
+      required: true
+      content:
+        application/json:
+          schema:
+            type: object
+            properties:
+              email:
+                type: string
+                example: john@example.com
+              password:
+                type: string
+                example: password123
+    responses:
+      200:
+        description: Login successful
+      400:
+        description: Invalid credentials
 
-    Error:
-      type: object
-      properties:
-        error:
-          type: object
-          properties:
-            message:
-              type: string
-              description: Error message
-            code:
-              type: string
-              description: Error code
-      example:
-        error:
-          message: "Invalid wallet address"
-          code: "INVALID_INPUT"
+/users/me:
+  get:
+    tags:
+      - Users
+    summary: Get current user profile
+    security:
+      - bearerAuth: []
+    responses:
+      200:
+        description: User profile retrieved
+      401:
+        description: Unauthorized
+
+/users/logout:
+  post:
+    tags:
+      - Users
+    summary: Logout user
+    security:
+      - bearerAuth: []
+    responses:
+      200:
+        description: Logout successful
+      500:
+        description: Server error

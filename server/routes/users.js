@@ -1,28 +1,56 @@
 const express = require('express');
 const router = express.Router();
-const supabase = require('../supabaseClient');
+const User = require('../models/User');
+const jwt = require('jsonwebtoken');
+const auth = require('../middleware/auth');
 
-// Get all users
-router.get('/', async (req, res) => {
-  const { data, error } = await supabase
-    .from('users')
-    .select('*');
-  
-  if (error) return res.status(500).json({ error });
-  res.json(data);
+// Register a new user
+router.post('/register', async (req, res) => {
+  try {
+    const user = new User(req.body);
+    await user.save();
+    res.status(201).send({ user }); // No token here
+  } catch (error) {
+    res.status(400).send({ error: error.message });
+  }
 });
 
-// Create a user
-router.post('/', async (req, res) => {
-  const { wallet_address, role = 'audience' } = req.body;
-  
-  const { data, error } = await supabase
-    .from('users')
-    .insert([{ wallet_address, role }])
-    .select();
-  
-  if (error) return res.status(400).json({ error });
-  res.status(201).json(data[0]);
+// Login user
+router.post('/login', async (req, res) => {
+  try {
+    const { email, password } = req.body;
+    const user = await User.findByCredentials(email, password);
+    const token = await user.generateAuthToken();
+    
+    // Only send minimal user info and token
+    res.send({ 
+      user: { 
+        _id: user._id,
+        email: user.email,
+        fullName: user.fullName,
+        role: user.role
+      }, 
+      token 
+    });
+  } catch (error) {
+    res.status(400).send({ error: error.message });
+  }
+});
+
+// Get current user profile
+router.get('/me', auth, async (req, res) => {
+  res.send(req.user);
+});
+
+// Logout user
+router.post('/logout', auth, async (req, res) => {
+  try {
+    req.user.tokens = req.user.tokens.filter(token => token.token !== req.token);
+    await req.user.save();
+    res.send();
+  } catch (error) {
+    res.status(500).send();
+  }
 });
 
 module.exports = router;

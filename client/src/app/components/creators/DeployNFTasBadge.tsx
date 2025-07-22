@@ -1,19 +1,27 @@
 "use client";
-import { useState } from "react";
-import { lazyMint, setClaimConditions } from "thirdweb/extensions/erc1155";
+import React, { useState } from "react";
+import {
+  lazyMint,
+  setClaimConditions,
+  nextTokenIdToMint,
+  claimTo,
+} from "thirdweb/extensions/erc1155";
 import { getContract, sendTransaction } from "thirdweb";
 import {
   TransactionButton,
-  useActiveAccount,
   ConnectButton,
+  useActiveAccount,
 } from "thirdweb/react";
+import { smartWallet } from "thirdweb/wallets";
 import { etherlinkTestnet } from "@/lib/etherlinkChain";
 import { client } from "@/app/client";
-import { nextTokenIdToMint } from "thirdweb/extensions/erc1155";
 
-const CONTRACT_ADDRESS = "0xf51e2e32821509771b212734dc594cea5f89d634";
-const EXPLORER_PREFIX = "https://testnet.explorer.etherlink.com/tx/";
-const NATIVE_TOKEN_ADDRESS = "0xEeeeeEeeeEeEeeEeEeEeeEEEeeeeEeeeeeeeEEeE";
+const CONTRACT_ADDRESS =
+  process.env.NEXT_PUBLIC_CONTRACT_ADDRESS!;
+const EXPLORER_PREFIX =
+  process.env.NEXT_PUBLIC_EXPLORER_PREFIX!;
+const NATIVE_TOKEN_ADDRESS =
+  process.env.NEXT_PUBLIC_NATIVE_TOKEN_ADDRESS!;
 
 export default function DeployNFTasBadge() {
   const account = useActiveAccount();
@@ -22,18 +30,46 @@ export default function DeployNFTasBadge() {
     description: "",
     image: undefined as File | undefined,
   });
-  const [price, setPrice] = useState(""); // user-input
+  const [price, setPrice] = useState("");
+  const [maxSupply, setMaxSupply] = useState("100");
+
+  // UX states
   const [isMinting, setIsMinting] = useState(false);
   const [txHash, setTxHash] = useState<string | null>(null);
-  const [claimTxHash, setClaimTxHash] = useState<string | null>(null);
-  const [tokenId, setTokenId] = useState<bigint | null>(null);
+  const [claimTxHash, setClaimTxHash] = useState<
+    string | null
+  >(null);
+  const [mintTxHash, setMintTxHash] = useState<
+    string | null
+  >(null);
+  const [tokenId, setTokenId] = useState<bigint | null>(
+    null,
+  );
 
-  // String-->float for price (XTZ, not wei, Etherlink expects float price)
   const parsedPrice = Number(price || "0");
+
+  const sponsorWallet = smartWallet({
+    chain: etherlinkTestnet,
+    sponsorGas: true,
+  });
+
+  let claimInfo = "";
+  if (maxSupply && Number(maxSupply) > 0) {
+    claimInfo =
+      maxSupply +
+      " people can claim this NFT Badge to support your campaign.";
+  } else {
+    claimInfo = "Isi jumlah maksimal supporter";
+  }
 
   return (
     <div className="p-4 space-y-4 bg-white text-black rounded-xl shadow-lg max-w-md">
-      <ConnectButton client={client} chain={etherlinkTestnet} />
+      <ConnectButton
+        client={client}
+        chain={etherlinkTestnet}
+        wallets={[sponsorWallet]}
+      />
+
       {account ? (
         <div className="text-green-900 bg-green-100 rounded p-2 my-2 font-mono text-xs">
           Connected: {account.address}
@@ -43,12 +79,17 @@ export default function DeployNFTasBadge() {
           Not connected
         </div>
       )}
-      <h2 className="text-xl font-bold">Create Your NFT Badge</h2>
+
+      <h2 className="text-xl font-bold">
+        Create Your NFT Badge
+      </h2>
       <input
         type="text"
         placeholder="Name"
         value={metadata.name}
-        onChange={(e) => setMetadata({ ...metadata, name: e.target.value })}
+        onChange={(e) =>
+          setMetadata({ ...metadata, name: e.target.value })
+        }
         className="w-full p-2 border rounded"
       />
       <textarea
@@ -83,17 +124,40 @@ export default function DeployNFTasBadge() {
         onChange={(e) => setPrice(e.target.value)}
         className="w-full p-2 border rounded"
       />
+      <input
+        type="number"
+        min="1"
+        step="1"
+        placeholder="Total supply (max supporters)"
+        value={maxSupply}
+        onChange={(e) => setMaxSupply(e.target.value)}
+        className="w-full p-2 border rounded"
+      />
+      <div className="text-xs text-gray-600 mb-2">
+        {claimInfo}
+      </div>
+
       <TransactionButton
         transaction={async () => {
-          if (!account) throw new Error("Connect your wallet.");
-          if (!metadata.name || !metadata.description || !metadata.image)
+          if (!account)
+            throw new Error("Connect your wallet.");
+          if (
+            !metadata.name ||
+            !metadata.description ||
+            !metadata.image
+          )
             throw new Error("Fill in all NFT details.");
-          if (!price || isNaN(parsedPrice) || parsedPrice < 0)
+          if (
+            !price ||
+            isNaN(parsedPrice) ||
+            parsedPrice < 0
+          )
             throw new Error("Enter a valid price.");
 
           setIsMinting(true);
           setTxHash(null);
           setClaimTxHash(null);
+          setMintTxHash(null);
           setTokenId(null);
 
           const contract = await getContract({
@@ -102,11 +166,12 @@ export default function DeployNFTasBadge() {
             client,
           });
 
-          // 1. Get the next tokenId to mint BEFORE lazy mint!
-          const newTokenId = await nextTokenIdToMint({ contract });
+          const newTokenId = await nextTokenIdToMint({
+            contract,
+          });
           setTokenId(newTokenId);
 
-          // 2. Lazy Mint
+          // Lazy mint
           const lazyMintTx = lazyMint({
             contract,
             nfts: [
@@ -121,15 +186,20 @@ export default function DeployNFTasBadge() {
             transaction: lazyMintTx,
             account,
           });
-          setTxHash(lazyMintResult?.transactionHash || null);
+          setTxHash(
+            lazyMintResult?.transactionHash || null,
+          );
 
-          // 3. Set Claim Conditions for the new tokenId
+          // Set claim conditions
+          const maxClaimableSupply = BigInt(
+            maxSupply || "1",
+          );
           const setClaimTx = setClaimConditions({
             contract,
             tokenId: newTokenId,
             phases: [
               {
-                maxClaimableSupply: 100n,
+                maxClaimableSupply,
                 maxClaimablePerWallet: 1n,
                 currencyAddress: NATIVE_TOKEN_ADDRESS,
                 price: parsedPrice,
@@ -141,14 +211,33 @@ export default function DeployNFTasBadge() {
             transaction: setClaimTx,
             account,
           });
-          setClaimTxHash(claimResult?.transactionHash || null);
+          setClaimTxHash(
+            claimResult?.transactionHash || null,
+          );
+
+          // Pre-mint supply to your own address using claimTo
+          const claimToTx = claimTo({
+            contract,
+            to: account.address,
+            tokenId: newTokenId,
+            quantity: BigInt(maxSupply),
+          });
+          const claimToResult = await sendTransaction({
+            transaction: claimToTx,
+            account,
+          });
+          setMintTxHash(
+            claimToResult?.transactionHash || null,
+          );
 
           setIsMinting(false);
           return lazyMintResult;
         }}
+        disabled={isMinting}
       >
         {isMinting ? "Creating..." : "Create Badge"}
       </TransactionButton>
+
       {txHash && (
         <div className="mt-4">
           <a
@@ -173,12 +262,25 @@ export default function DeployNFTasBadge() {
           </a>
         </div>
       )}
+      {mintTxHash && (
+        <div className="mt-2">
+          <a
+            href={`${EXPLORER_PREFIX}${mintTxHash}`}
+            target="_blank"
+            rel="noopener noreferrer"
+            className="text-green-600 font-semibold underline"
+          >
+            View mint transaction →
+          </a>
+        </div>
+      )}
       {tokenId !== null && (
         <div className="mt-4 text-green-800 bg-green-100 rounded p-2">
           <b>Badge ready to claim!</b>
           <br />
           <span>
-            <span className="text-xs">tokenId:</span> {tokenId.toString()}
+            <span className="text-xs">tokenId:</span>{" "}
+            {tokenId.toString()}
           </span>
         </div>
       )}

@@ -26,13 +26,13 @@ fs.readdirSync(pathsDir).forEach((file) => {
 });
 
 // Routes
-app.use('/members', require('./routes/members'));
-app.use('/subscriptions', require('./routes/subscriptions'));
 app.use('/users', require('./routes/users'));
 
 // Swagger docs
 app.use('/api-docs', swaggerUi.serve);
 app.get('/api-docs', swaggerUi.setup(baseSwagger));
+
+// npx nodemon index.js
 
 const HOST = process.env.HOST || 'localhost';
 const PORT = process.env.PORT || 3000;

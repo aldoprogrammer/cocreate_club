@@ -2,4 +2,12 @@ openapi: 3.0.0
 info:
   title: CoCreate Club API
   version: 1.0.0
-paths: {}
+servers:
+  - url: http://localhost:3001
+    description: Local development server
+components:
+  securitySchemes:
+    bearerAuth:
+      type: http
+      scheme: bearer
+      bearerFormat: JWT

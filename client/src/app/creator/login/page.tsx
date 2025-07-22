@@ -28,6 +28,7 @@ export default function CreatorLoginPage() {
         </p>
 
         <div className="bg-background-light rounded-xl p-8">
+          <div className="grid grid-cols-2 gap-2">
           <ConnectButton
             client={client}
             appMetadata={{
@@ -53,6 +54,18 @@ export default function CreatorLoginPage() {
             }}
             onConnect={() => router.push("/creator")}
           />
+           <button
+            className="w-full py-3 rounded-lg font-medium border"
+            style={{
+              backgroundColor: "transparent",
+              color: COLORS.text.DEFAULT,
+              borderColor: COLORS.primary.DEFAULT,
+            }}
+            onClick={() => router.push("/creator")}
+          >
+            Dashboard
+          </button>
+          </div>
 
           <div className="relative my-6">
             <div className="absolute inset-0 flex items-center">

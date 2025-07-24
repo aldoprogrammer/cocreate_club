@@ -69,6 +69,123 @@
       401:
         description: Unauthorized
 
+/users/{id}:
+  get:
+    tags:
+      - Users
+    summary: Get user by ID
+    parameters:
+      - in: path
+        name: id
+        required: true
+        schema:
+          type: string
+        description: User ID
+    responses:
+      200:
+        description: User data retrieved
+        content:
+          application/json:
+            schema:
+              type: object
+              properties:
+                _id:
+                  type: string
+                fullName:
+                  type: string
+                email:
+                  type: string
+                role:
+                  type: string
+                walletAddress:
+                  type: string
+                createdAt:
+                  type: string
+                updatedAt:
+                  type: string
+      404:
+        description: User not found
+      400:
+        description: Invalid ID format
+
+  patch:
+    tags:
+      - Users
+    summary: Update user data
+    parameters:
+      - name: id
+        in: path
+        required: true
+        schema:
+          type: string
+        description: User ID
+    requestBody:
+      required: true
+      content:
+        application/json:
+          schema:
+            type: object
+            properties:
+              fullName:
+                type: string
+              email:
+                type: string
+              password:
+                type: string
+              walletAddress:
+                type: string
+              role:
+                type: string
+                enum: [audience, creator]
+    responses:
+      200:
+        description: User updated successfully
+      400:
+        description: Invalid input
+      404:
+        description: User not found
+
+
+/users/all:
+  get:
+    tags:
+      - Users
+    summary: Retrieve all users
+    responses:
+      200:
+        description: List of users retrieved successfully
+        content:
+          application/json:
+            schema:
+              type: array
+              items:
+                type: object
+                properties:
+                  _id:
+                    type: string
+                    example: 60f7f81f8e620a001c8c87f3
+                  fullName:
+                    type: string
+                    example: John Doe
+                  email:
+                    type: string
+                    example: john@example.com
+                  walletAddress:
+                    type: string
+                    example: 0x71C7656EC7ab88b098defB751B7401B5f6d8976F
+                  role:
+                    type: string
+                    example: audience
+                  createdAt:
+                    type: string
+                    example: 2024-01-01T00:00:00.000Z
+                  updatedAt:
+                    type: string
+                    example: 2024-01-01T00:00:00.000Z
+      500:
+        description: Server error
+
+
 /users/logout:
   post:
     tags:

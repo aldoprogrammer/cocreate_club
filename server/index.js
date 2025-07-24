@@ -4,11 +4,15 @@ const YAML = require('yamljs');
 const fs = require('fs');
 const path = require('path');
 const mongoose = require('mongoose');
+const cors = require('cors');
 require('dotenv').config();
 
 const app = express();
 app.use(express.json());
-
+app.use(cors({
+  origin: 'http://localhost:3000', // frontend URL
+  credentials: true,               // kalau pakai cookie / auth
+}));
 // MongoDB Connection
 mongoose.connect(process.env.MONGODB_URI)
   .then(() => console.log('Connected to MongoDB Atlas'))

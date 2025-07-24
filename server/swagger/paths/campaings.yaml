@@ -1,0 +1,208 @@
+/campaigns:
+  post:
+    summary: Create a new campaign
+    tags:
+      - Campaigns
+    security:
+      - bearerAuth: []
+    requestBody:
+      required: true
+      content:
+        application/json:
+          schema:
+            type: object
+            required:
+              - title
+              - description
+              - images
+              - category
+              - price
+              - options
+            properties:
+              title:
+                type: string
+              description:
+                type: string
+              images:
+                type: array
+                items:
+                  type: string
+              category:
+                type: string
+              price:
+                type: number
+                minimum: 0.001
+              options:
+                type: array
+                minItems: 2
+                items:
+                  type: string
+    responses:
+      201:
+        description: Campaign created
+      400:
+        description: Invalid input
+      403:
+        description: Unauthorized
+
+  get:
+    summary: Get all campaigns
+    tags:
+      - Campaigns
+    responses:
+      200:
+        description: List of campaigns
+      500:
+        description: Server error
+
+/campaigns/{id}:
+  get:
+    summary: Get campaign details with vote results
+    tags:
+      - Campaigns
+    parameters:
+      - name: id
+        in: path
+        required: true
+        schema:
+          type: string
+    responses:
+      200:
+        description: Campaign details
+      404:
+        description: Campaign not found
+
+  patch:
+    summary: Update campaign
+    tags:
+      - Campaigns
+    security:
+      - bearerAuth: []
+    parameters:
+      - name: id
+        in: path
+        required: true
+        schema:
+          type: string
+    requestBody:
+      required: true
+      content:
+        application/json:
+          schema:
+            type: object
+            properties:
+              title:
+                type: string
+              description:
+                type: string
+              images:
+                type: array
+                items:
+                  type: string
+              category:
+                type: string
+              price:
+                type: number
+    responses:
+      200:
+        description: Campaign updated
+      400:
+        description: Invalid updates
+      403:
+        description: Unauthorized
+      404:
+        description: Not found
+
+  delete:
+    summary: Delete a campaign
+    tags:
+      - Campaigns
+    security:
+      - bearerAuth: []
+    parameters:
+      - name: id
+        in: path
+        required: true
+        schema:
+          type: string
+    responses:
+      200:
+        description: Campaign deleted
+      403:
+        description: Unauthorized
+      404:
+        description: Campaign not found
+
+/campaigns/{id}/vote:
+  post:
+    summary: Participate and vote in campaign
+    tags:
+      - Campaigns
+    security:
+      - bearerAuth: []
+    parameters:
+      - name: id
+        in: path
+        required: true
+        schema:
+          type: string
+    requestBody:
+      required: true
+      content:
+        application/json:
+          schema:
+            type: object
+            required:
+              - voteIndex
+              - amountPaid
+            properties:
+              voteIndex:
+                type: integer
+                minimum: 0
+                description: Index of selected option
+              amountPaid:
+                type: number
+                minimum: 0.001
+    responses:
+      200:
+        description: Vote recorded
+      400:
+        description: Invalid vote or already voted
+      404:
+        description: Campaign not found
+
+
+/campaigns/{id}/options:
+  post:
+    summary: Set vote options (creator only)
+    tags:
+      - Campaigns
+    security:
+      - bearerAuth: []
+    parameters:
+      - name: id
+        in: path
+        required: true
+        schema:
+          type: string
+    requestBody:
+      required: true
+      content:
+        application/json:
+          schema:
+            type: object
+            required: [options]
+            properties:
+              options:
+                type: array
+                items:
+                  type: string
+    responses:
+      200:
+        description: Vote options set
+      400:
+        description: Invalid options
+      403:
+        description: Unauthorized
+      404:
+        description: Campaign not found

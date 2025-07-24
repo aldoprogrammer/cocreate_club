@@ -31,6 +31,7 @@ fs.readdirSync(pathsDir).forEach((file) => {
 
 // Routes
 app.use('/users', require('./routes/users'));
+app.use('/campaigns', require('./routes/campaigns'));
 
 // Swagger docs
 app.use('/api-docs', swaggerUi.serve);

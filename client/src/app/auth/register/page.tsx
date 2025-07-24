@@ -1,21 +1,23 @@
 "use client";
-import { useState } from 'react';
-import axios from 'axios';
-import { useRouter } from 'next/navigation';
-import toast from 'react-hot-toast';
+import { useState } from "react";
+import axios from "axios";
+import { useRouter } from "next/navigation";
+import toast from "react-hot-toast";
 
 export default function Register() {
   const [formData, setFormData] = useState({
-    fullName: '',
-    email: '',
-    password: '',
-    role: 'audience',
+    fullName: "",
+    email: "",
+    password: "",
+    role: "audience",
   });
 
   const [loading, setLoading] = useState(false);
   const router = useRouter();
 
-  const handleChange = (e: React.ChangeEvent<HTMLInputElement | HTMLSelectElement>) => {
+  const handleChange = (
+    e: React.ChangeEvent<HTMLInputElement | HTMLSelectElement>
+  ) => {
     setFormData({
       ...formData,
       [e.target.name]: e.target.value,
@@ -28,10 +30,10 @@ export default function Register() {
     try {
       const backendUrl = process.env.NEXT_PUBLIC_BACKEND_URL;
       await axios.post(`${backendUrl}/users/register`, formData);
-      toast.success('Registration successful!');
-      router.push('/auth/login');
+      toast.success("Registration successful!");
+      router.push("/auth/login");
     } catch (error: any) {
-      const msg = error?.response?.data?.message || 'Registration failed!';
+      const msg = error?.response?.data?.message || "Registration failed!";
       toast.error(msg);
     } finally {
       setLoading(false);
@@ -46,7 +48,10 @@ export default function Register() {
         </h2>
         <form onSubmit={handleSubmit} className="space-y-6">
           <div className="space-y-2">
-            <label htmlFor="fullName" className="text-sm font-medium text-gray-700">
+            <label
+              htmlFor="fullName"
+              className="text-sm font-medium text-gray-700"
+            >
               Full Name
             </label>
             <input
@@ -62,7 +67,10 @@ export default function Register() {
           </div>
 
           <div className="space-y-2">
-            <label htmlFor="email" className="text-sm font-medium text-gray-700">
+            <label
+              htmlFor="email"
+              className="text-sm font-medium text-gray-700"
+            >
               Email Address
             </label>
             <input
@@ -79,7 +87,10 @@ export default function Register() {
           </div>
 
           <div className="space-y-2">
-            <label htmlFor="password" className="text-sm font-medium text-gray-700">
+            <label
+              htmlFor="password"
+              className="text-sm font-medium text-gray-700"
+            >
               Password
             </label>
             <input
@@ -115,7 +126,7 @@ export default function Register() {
             type="submit"
             disabled={loading}
             className={`w-full flex items-center justify-center gap-2 bg-indigo-600 hover:bg-indigo-700 transition-all text-white font-medium py-3 rounded-xl shadow-sm ${
-              loading ? 'opacity-70 cursor-not-allowed' : ''
+              loading ? "opacity-70 cursor-not-allowed" : ""
             }`}
           >
             {loading && (
@@ -140,7 +151,14 @@ export default function Register() {
                 />
               </svg>
             )}
-            {loading ? 'Registering...' : 'Register'}
+            {loading ? "Registering..." : "Register"}
+          </button>
+          <button
+            type="button"
+            onClick={() => router.push("/auth/login")}
+            className="flex justify-center mt-6 items-center w-full rounded-md border border-gray-300 bg-white px-4 py-2 text-sm font-medium text-gray-700 shadow-sm hover:bg-gray-50 focus:outline-none focus:ring-2 focus:ring-indigo-500 focus:ring-offset-2"
+          >
+            Login
           </button>
         </form>
       </div>

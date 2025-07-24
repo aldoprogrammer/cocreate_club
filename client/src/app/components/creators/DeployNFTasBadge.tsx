@@ -2,9 +2,8 @@
 import React, { useState } from "react";
 import {
   lazyMint,
-  setClaimConditions,
   nextTokenIdToMint,
-  claimTo,
+  setClaimConditions,
 } from "thirdweb/extensions/erc1155";
 import { getContract, sendTransaction } from "thirdweb";
 import {
@@ -32,26 +31,29 @@ export default function DeployNFTasBadge() {
   });
   const [price, setPrice] = useState("");
   const [maxSupply, setMaxSupply] = useState("100");
-
-  // UX states
   const [isMinting, setIsMinting] = useState(false);
   const [txHash, setTxHash] = useState<string | null>(null);
   const [claimTxHash, setClaimTxHash] = useState<
-    string | null
-  >(null);
-  const [mintTxHash, setMintTxHash] = useState<
     string | null
   >(null);
   const [tokenId, setTokenId] = useState<bigint | null>(
     null,
   );
 
-  const parsedPrice = Number(price || "0");
-
   const sponsorWallet = smartWallet({
     chain: etherlinkTestnet,
     sponsorGas: true,
   });
+
+  // Helper: parse price string to number (in ether)
+  function parsePriceToNumber(
+    priceStr: string,
+  ): number | null {
+    const priceNum = Number(priceStr);
+    if (!priceStr || isNaN(priceNum) || priceNum < 0)
+      return null;
+    return priceNum;
+  }
 
   let claimInfo = "";
   if (maxSupply && Number(maxSupply) > 0) {
@@ -69,7 +71,6 @@ export default function DeployNFTasBadge() {
         chain={etherlinkTestnet}
         wallets={[sponsorWallet]}
       />
-
       {account ? (
         <div className="text-green-900 bg-green-100 rounded p-2 my-2 font-mono text-xs">
           Connected: {account.address}
@@ -147,31 +148,28 @@ export default function DeployNFTasBadge() {
             !metadata.image
           )
             throw new Error("Fill in all NFT details.");
-          if (
-            !price ||
-            isNaN(parsedPrice) ||
-            parsedPrice < 0
-          )
+
+          const priceNumber = parsePriceToNumber(price);
+          if (priceNumber === null)
             throw new Error("Enter a valid price.");
 
           setIsMinting(true);
           setTxHash(null);
           setClaimTxHash(null);
-          setMintTxHash(null);
           setTokenId(null);
 
+          // Get contract & next token id
           const contract = await getContract({
             address: CONTRACT_ADDRESS,
             chain: etherlinkTestnet,
             client,
           });
-
           const newTokenId = await nextTokenIdToMint({
             contract,
           });
           setTokenId(newTokenId);
 
-          // Lazy mint
+          // 1. Lazy mint NFT
           const lazyMintTx = lazyMint({
             contract,
             nfts: [
@@ -190,44 +188,28 @@ export default function DeployNFTasBadge() {
             lazyMintResult?.transactionHash || null,
           );
 
-          // Set claim conditions
-          const maxClaimableSupply = BigInt(
-            maxSupply || "1",
-          );
-          const setClaimTx = setClaimConditions({
+          // 2. Set claim conditions (using the recommended API)
+          const claimCondTx = setClaimConditions({
             contract,
             tokenId: newTokenId,
             phases: [
               {
-                maxClaimableSupply,
+                maxClaimableSupply: BigInt(
+                  maxSupply || "1",
+                ),
                 maxClaimablePerWallet: 1n,
                 currencyAddress: NATIVE_TOKEN_ADDRESS,
-                price: parsedPrice,
+                price: priceNumber,
                 startTime: new Date(),
               },
             ],
           });
-          const claimResult = await sendTransaction({
-            transaction: setClaimTx,
+          const claimCondTxResult = await sendTransaction({
+            transaction: claimCondTx,
             account,
           });
           setClaimTxHash(
-            claimResult?.transactionHash || null,
-          );
-
-          // Pre-mint supply to your own address using claimTo
-          const claimToTx = claimTo({
-            contract,
-            to: account.address,
-            tokenId: newTokenId,
-            quantity: BigInt(maxSupply),
-          });
-          const claimToResult = await sendTransaction({
-            transaction: claimToTx,
-            account,
-          });
-          setMintTxHash(
-            claimToResult?.transactionHash || null,
+            claimCondTxResult?.transactionHash || null,
           );
 
           setIsMinting(false);
@@ -259,18 +241,6 @@ export default function DeployNFTasBadge() {
             className="text-purple-600 font-semibold underline"
           >
             View claim condition transaction →
-          </a>
-        </div>
-      )}
-      {mintTxHash && (
-        <div className="mt-2">
-          <a
-            href={`${EXPLORER_PREFIX}${mintTxHash}`}
-            target="_blank"
-            rel="noopener noreferrer"
-            className="text-green-600 font-semibold underline"
-          >
-            View mint transaction →
           </a>
         </div>
       )}

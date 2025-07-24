@@ -8,7 +8,7 @@ import { etherlinkTestnet } from "@/lib/etherlinkChain";
 import { client } from "@/app/client";
 
 const CONTRACT_ADDRESS = process.env.NEXT_PUBLIC_CONTRACT_ADDRESS!;
-const TOKEN_ID = 4n;
+const TOKEN_ID = 6n;
 
 const convertIpfsUrl = (ipfsUrl: string) =>
   ipfsUrl?.startsWith("ipfs://")

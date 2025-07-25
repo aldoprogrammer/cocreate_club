@@ -1,19 +1,14 @@
 "use client";
 import React, { useEffect, useState } from "react";
 import Image from "next/image";
-import {
-  ConnectButton,
-  ClaimButton,
-  useActiveWallet,
-} from "thirdweb/react";
+import { ConnectButton, ClaimButton, useActiveWallet } from "thirdweb/react";
 import { getContract } from "thirdweb";
 import { getNFT } from "thirdweb/extensions/erc1155";
 import { etherlinkTestnet } from "@/lib/etherlinkChain";
 import { client } from "@/app/client";
 
-const CONTRACT_ADDRESS =
-  process.env.NEXT_PUBLIC_CONTRACT_ADDRESS!;
-const TOKEN_ID = 0n;
+const CONTRACT_ADDRESS = process.env.NEXT_PUBLIC_CONTRACT_ADDRESS!;
+const TOKEN_ID = 1n;
 
 const convertIpfsUrl = (ipfsUrl: string) =>
   ipfsUrl?.startsWith("ipfs://")
@@ -46,10 +41,7 @@ export default function BadgePage() {
         });
         if (!done) setNft(badge);
       } catch (e: any) {
-        if (!done)
-          setErr(
-            "Failed to load badge: " + (e.message || e),
-          );
+        if (!done) setErr("Failed to load badge: " + (e.message || e));
       } finally {
         if (!done) setLoading(false);
       }
@@ -96,10 +88,7 @@ export default function BadgePage() {
         </div>
         {/* Connect Wallet Button */}
         <div className="flex justify-center mb-4">
-          <ConnectButton
-            client={client}
-            chain={etherlinkTestnet}
-          />
+          <ConnectButton client={client} chain={etherlinkTestnet} />
         </div>
         <div className="flex flex-col items-center mt-3">
           <div className="relative mb-5">
@@ -129,8 +118,7 @@ export default function BadgePage() {
           </div>
 
           <div className="mt-3 text-xl md:text-2xl font-bold tracking-tight text-center text-gray-900">
-            {nft.metadata.name ||
-              `Badge Token #${TOKEN_ID.toString()}`}
+            {nft.metadata.name || `Badge Token #${TOKEN_ID.toString()}`}
           </div>
           {nft.metadata.description && (
             <div className="mt-2 text-base text-gray-600 leading-relaxed text-center max-w-xs">
@@ -145,8 +133,7 @@ export default function BadgePage() {
           <div className="mt-6">
             {!wallet ? (
               <div className="text-sm text-gray-500">
-                Please connect your wallet to claim the
-                badge.
+                Please connect your wallet to claim the badge.
               </div>
             ) : (
               <ClaimButton

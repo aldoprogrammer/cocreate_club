@@ -1,14 +1,19 @@
 "use client";
 import React, { useEffect, useState } from "react";
 import Image from "next/image";
-import { getContract, sendTransaction } from "thirdweb";
+import {
+  ConnectButton,
+  ClaimButton,
+  useActiveWallet,
+} from "thirdweb/react";
+import { getContract } from "thirdweb";
 import { getNFT } from "thirdweb/extensions/erc1155";
-import { ClaimButton } from "thirdweb/react";
 import { etherlinkTestnet } from "@/lib/etherlinkChain";
 import { client } from "@/app/client";
 
-const CONTRACT_ADDRESS = process.env.NEXT_PUBLIC_CONTRACT_ADDRESS!;
-const TOKEN_ID = 6n;
+const CONTRACT_ADDRESS =
+  process.env.NEXT_PUBLIC_CONTRACT_ADDRESS!;
+const TOKEN_ID = 0n;
 
 const convertIpfsUrl = (ipfsUrl: string) =>
   ipfsUrl?.startsWith("ipfs://")
@@ -21,6 +26,9 @@ export default function BadgePage() {
   const [err, setErr] = useState<string | null>(null);
   const [imgLoaded, setImgLoaded] = useState(false);
   const [imgError, setImgError] = useState(false);
+
+  // Check wallet connection status
+  const wallet = useActiveWallet();
 
   useEffect(() => {
     let done = false;
@@ -38,7 +46,10 @@ export default function BadgePage() {
         });
         if (!done) setNft(badge);
       } catch (e: any) {
-        if (!done) setErr("Failed to load badge: " + (e.message || e));
+        if (!done)
+          setErr(
+            "Failed to load badge: " + (e.message || e),
+          );
       } finally {
         if (!done) setLoading(false);
       }
@@ -83,7 +94,14 @@ export default function BadgePage() {
         <div className="absolute -top-5 left-1/2 -translate-x-1/2 bg-black text-white uppercase px-3 py-1 rounded-full text-xs font-semibold tracking-widest shadow-sm select-none">
           Badge NFT
         </div>
-        <div className="flex flex-col items-center mt-7">
+        {/* Connect Wallet Button */}
+        <div className="flex justify-center mb-4">
+          <ConnectButton
+            client={client}
+            chain={etherlinkTestnet}
+          />
+        </div>
+        <div className="flex flex-col items-center mt-3">
           <div className="relative mb-5">
             {!imgLoaded && !imgError && (
               <div className="w-32 h-32 rounded-xl bg-gray-200 animate-pulse" />
@@ -111,7 +129,8 @@ export default function BadgePage() {
           </div>
 
           <div className="mt-3 text-xl md:text-2xl font-bold tracking-tight text-center text-gray-900">
-            {nft.metadata.name || `Badge Token #${TOKEN_ID.toString()}`}
+            {nft.metadata.name ||
+              `Badge Token #${TOKEN_ID.toString()}`}
           </div>
           {nft.metadata.description && (
             <div className="mt-2 text-base text-gray-600 leading-relaxed text-center max-w-xs">
@@ -124,18 +143,25 @@ export default function BadgePage() {
 
           {/* === Claim Button === */}
           <div className="mt-6">
-            <ClaimButton
-              contractAddress={CONTRACT_ADDRESS}
-              client={client}
-              chain={etherlinkTestnet}
-              claimParams={{
-                type: "ERC1155",
-                tokenId: TOKEN_ID,
-                quantity: 1n,
-              }}
-            >
-              Klaim Badge
-            </ClaimButton>
+            {!wallet ? (
+              <div className="text-sm text-gray-500">
+                Please connect your wallet to claim the
+                badge.
+              </div>
+            ) : (
+              <ClaimButton
+                contractAddress={CONTRACT_ADDRESS}
+                client={client}
+                chain={etherlinkTestnet}
+                claimParams={{
+                  type: "ERC1155",
+                  tokenId: TOKEN_ID,
+                  quantity: 1n,
+                }}
+              >
+                Klaim Badge
+              </ClaimButton>
+            )}
           </div>
         </div>
       </div>

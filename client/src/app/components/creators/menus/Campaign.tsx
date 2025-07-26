@@ -4,6 +4,7 @@ import { useState, useEffect } from "react";
 import axios from "axios";
 import toast from "react-hot-toast";
 import { Loader2 } from "lucide-react";
+import MyCampaign from "./campaign/MyCampaign";
 
 interface Campaign {
   _id: string;
@@ -33,20 +34,21 @@ export default function Campaign() {
   const [formData, setFormData] = useState<{
     title: string;
     description: string;
-    images: string;
+    images: FileList | null;
     category: string;
     price: string;
     options: string[];
   }>({
     title: "",
     description: "",
-    images: "",
+    images: null,
     category: "",
     price: "",
     options: ["", ""], // Minimum 2 options
   });
   const [editCampaign, setEditCampaign] = useState<Campaign | null>(null);
   const [editOptions, setEditOptions] = useState<string[]>(["", ""]);
+  const [editImages, setEditImages] = useState<FileList | null>(null);
   const [isModalOpen, setIsModalOpen] = useState<boolean>(false);
 
   const backendUrl = process.env.NEXT_PUBLIC_BACKEND_URL;
@@ -87,7 +89,34 @@ export default function Campaign() {
   const handleChange = (
     e: React.ChangeEvent<HTMLInputElement | HTMLTextAreaElement>
   ) => {
-    setFormData({ ...formData, [e.target.name]: e.target.value });
+    const { name, value } = e.target;
+    setFormData({ ...formData, [name]: value });
+  };
+
+  const handleFileChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+    const files = e.target.files;
+    if (
+      files &&
+      Array.from(files).every((file) => file.type.startsWith("image/"))
+    ) {
+      setFormData({ ...formData, images: files });
+    } else {
+      toast.error("Please select valid image files (e.g., PNG, JPEG)");
+      e.target.value = ""; // Reset input
+    }
+  };
+
+  const handleEditFileChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+    const files = e.target.files;
+    if (
+      files &&
+      Array.from(files).every((file) => file.type.startsWith("image/"))
+    ) {
+      setEditImages(files);
+    } else {
+      toast.error("Please select valid image files (e.g., PNG, JPEG)");
+      e.target.value = ""; // Reset input
+    }
   };
 
   const handleOptionChange = (index: number, value: string) => {
@@ -118,27 +147,37 @@ export default function Campaign() {
     }
     setLoading(true);
     try {
-      const data = {
-        ...formData,
-        images: formData.images
-          .split(",")
-          .map((img) => img.trim())
-          .filter((img) => img),
-        price: parseFloat(formData.price),
-        options: formData.options.filter((opt) => opt.trim() !== ""),
-      };
+      const data = new FormData();
+      data.append("title", formData.title);
+      data.append("description", formData.description);
+      data.append("category", formData.category);
+      data.append("price", formData.price);
+      formData.options
+        .filter((opt) => opt.trim() !== "")
+        .forEach((opt) => data.append("options[]", opt));
+      if (formData.images) {
+        Array.from(formData.images).forEach((file) =>
+          data.append("images", file)
+        );
+      }
+
       await axios.post(`${backendUrl}/campaigns`, data, {
-        headers: { Authorization: `Bearer ${token}` },
+        headers: {
+          Authorization: `Bearer ${token}`,
+          "Content-Type": "multipart/form-data",
+        },
       });
       toast.success("Campaign created successfully!");
       setFormData({
         title: "",
         description: "",
-        images: "",
+        images: null,
         category: "",
         price: "",
         options: ["", ""],
       });
+      (document.querySelector('input[type="file"]') as HTMLInputElement).value =
+        ""; // Reset file input
       fetchCampaigns();
     } catch (error: any) {
       toast.error(error?.response?.data?.error || "Failed to create campaign");
@@ -155,18 +194,26 @@ export default function Campaign() {
     }
     setLoading(true);
     try {
-      const data = {
-        title: editCampaign.title,
-        description: editCampaign.description,
-        images: editCampaign.images,
-        category: editCampaign.category,
-        price: editCampaign.price,
-      };
+      const data = new FormData();
+      data.append("title", editCampaign.title);
+      data.append("description", editCampaign.description);
+      data.append("category", editCampaign.category);
+      data.append("price", editCampaign.price.toString());
+      if (editImages) {
+        Array.from(editImages).forEach((file) => data.append("images", file));
+      }
+
       await axios.patch(`${backendUrl}/campaigns/${editCampaign._id}`, data, {
-        headers: { Authorization: `Bearer ${token}` },
+        headers: {
+          Authorization: `Bearer ${token}`,
+          "Content-Type": "multipart/form-data",
+        },
       });
       toast.success("Campaign updated successfully!");
       setIsModalOpen(false);
+      setEditImages(null);
+      (document.querySelector('input[type="file"]') as HTMLInputElement).value =
+        ""; // Reset file input
       fetchCampaigns();
     } catch (error: any) {
       toast.error(error?.response?.data?.error || "Failed to update campaign");
@@ -218,20 +265,18 @@ export default function Campaign() {
     }
   };
 
-  const openEditModal = async (id: string) => {
+  const openEditModal = async (campaign: Campaign) => {
     if (!token || !user) {
       toast.error("Please log in to edit a campaign");
       return;
     }
     try {
-      const response = await axios.get(`${backendUrl}/campaigns/${id}`, {
-        headers: { Authorization: `Bearer ${token}` },
-      });
-      setEditCampaign(response.data);
-      setEditOptions(response.data.options.map((opt: any) => opt.label));
+      setEditCampaign(campaign);
+      setEditOptions(campaign.options.map((opt: any) => opt.label));
+      setEditImages(null);
       setIsModalOpen(true);
     } catch (error: any) {
-      toast.error(error?.response?.data?.error || "Failed to fetch campaign");
+      toast.error("Failed to open edit modal");
     }
   };
 
@@ -239,57 +284,65 @@ export default function Campaign() {
     <div className="px-6 py-10">
       {/* Create Campaign Form */}
       <div className="bg-[#1a1a1d] rounded-xl border border-white/10 p-6 mb-8">
-        <h2 className="text-lg font-semibold mb-4 text-white">Create New Campaign</h2>
+        <h2 className="text-lg font-semibold mb-4 text-white">
+          Create New Campaign
+        </h2>
         <form onSubmit={handleSubmit} className="space-y-4">
           <div>
-            <label className="block text-sm font-medium text-gray-300">Title</label>
+            <label className="block text-sm font-medium text-gray-400">
+              Title
+            </label>
             <input
               type="text"
               name="title"
               value={formData.title}
               onChange={handleChange}
-              className="mt-1 block w-full px-4 py-2 rounded-full border border-gray-300 bg-[#222226] text-white shadow-sm focus:ring-indigo-500 focus:border-indigo-500 text-lg"
+              className="mt-1 block w-full px-4 py-2 rounded-full border border-gray-600 bg-[#222226] text-white shadow-sm focus:ring-indigo-600 focus:border-indigo-600 text-sm"
               placeholder="Campaign Title"
               required
             />
           </div>
           <div>
-            <label className="block text-sm font-medium text-gray-300">Description</label>
+            <label className="block text-sm font-medium text-gray-400">
+              Description
+            </label>
             <textarea
               name="description"
               value={formData.description}
               onChange={handleChange}
-              className="mt-1 block w-full px-4 py-2 rounded-xl border border-gray-300 bg-[#222226] text-white shadow-sm focus:ring-indigo-500 focus:border-indigo-500 text-lg"
-              placeholder="Describe your campaign"
+              className="mt-1 block w-full px-4 py-2 rounded-xl border border-gray-600 bg-[#222226] text-white shadow-sm focus:ring-indigo-600 focus:border-indigo-600 text-sm"
+              placeholder="Describe your campaign..."
               required
             />
           </div>
           <div>
-            <label className="block text-sm font-medium text-gray-300">
-              Images (comma-separated URLs)
+            <label className="block text-sm font-medium text-gray-400">
+              Images
             </label>
             <input
-              type="text"
+              type="file"
               name="images"
-              value={formData.images}
-              onChange={handleChange}
-              className="mt-1 block w-full px-4 py-2 rounded-full border border-gray-300 bg-[#222226] text-white shadow-sm focus:ring-indigo-500 focus:border-indigo-500 text-lg"
-              placeholder="https://image1.jpg,https://image2.jpg"
+              accept="image/*"
+              multiple
+              onChange={handleFileChange}
+              className="mt-1 block w-full px-4 py-2 rounded-full border border-gray-600 bg-[#222226] text-gray-400 text-sm file:mr-4 file:py-2 file:px-4 file:rounded-full file:border-0 file:bg-indigo-600 file:text-white file:hover:bg-indigo-700"
             />
           </div>
           <div>
-            <label className="block text-sm font-medium text-gray-300">Category</label>
+            <label className="block text-sm font-medium text-gray-400">
+              Category
+            </label>
             <input
               type="text"
               name="category"
               value={formData.category}
               onChange={handleChange}
-              className="mt-1 block w-full px-4 py-2 rounded-full border border-gray-300 bg-[#222226] text-white shadow-sm focus:ring-indigo-500 focus:border-indigo-500 text-lg"
+              className="mt-1 block w-full px-4 py-2 rounded-full border border-gray-600 bg-[#222226] text-white shadow-sm focus:ring-indigo-600 focus:border-indigo-600 text-sm"
               placeholder="e.g., Art, Music"
             />
           </div>
           <div>
-            <label className="block text-sm font-medium text-gray-300">
+            <label className="block text-sm font-medium text-gray-400">
               Price (minimum 0.001)
             </label>
             <input
@@ -297,7 +350,7 @@ export default function Campaign() {
               name="price"
               value={formData.price}
               onChange={handleChange}
-              className="mt-1 block w-full px-4 py-2 rounded-full border border-gray-300 bg-[#222226] text-white shadow-sm focus:ring-indigo-500 focus:border-indigo-500 text-lg"
+              className="mt-1 block w-full px-4 py-2 rounded-full border border-gray-600 bg-[#222226] text-white shadow-sm focus:ring-indigo-600 focus:border-indigo-600 text-sm"
               placeholder="0.001"
               step="0.001"
               min="0.001"
@@ -305,7 +358,7 @@ export default function Campaign() {
             />
           </div>
           <div>
-            <label className="block text-sm font-medium text-gray-300">
+            <label className="block text-sm font-medium text-gray-400">
               Vote Options (minimum 2)
             </label>
             {formData.options.map((opt, index) => (
@@ -314,7 +367,7 @@ export default function Campaign() {
                 type="text"
                 value={opt}
                 onChange={(e) => handleOptionChange(index, e.target.value)}
-                className="mt-1 block w-full px-4 py-2 rounded-full border border-gray-300 bg-[#222226] text-white shadow-sm focus:ring-indigo-500 focus:border-indigo-500 text-lg"
+                className="mt-1 block w-full px-4 py-2 rounded-full border border-gray-600 bg-[#222226] text-white shadow-sm focus:ring-indigo-600 focus:border-indigo-600 text-sm"
                 placeholder={`Option ${index + 1}`}
                 required
               />
@@ -322,7 +375,7 @@ export default function Campaign() {
             <button
               type="button"
               onClick={addOption}
-              className="mt-2 px-4 py-2 rounded-full bg-[#222226] text-gray-300 hover:bg-[#2a2a2e] text-sm"
+              className="mt-2 px-4 py-2 rounded-full bg-[#222226] text-gray-400 hover:bg-[#2a2a2e] text-sm"
             >
               Add Option
             </button>
@@ -330,7 +383,7 @@ export default function Campaign() {
           <button
             type="submit"
             disabled={loading}
-            className="flex justify-center items-center w-full rounded-full font-medium text-lg px-8 py-3 bg-indigo-600 hover:bg-indigo-700"
+            className="flex justify-center items-center w-full rounded-full font-medium text-sm px-8 py-3 bg-indigo-600 hover:bg-indigo-700 text-white"
           >
             {loading ? (
               <>
@@ -345,119 +398,107 @@ export default function Campaign() {
       </div>
 
       {/* Campaign List */}
-      <div className="bg-[#1a1a1d] rounded-xl border border-white/10 p-6 mb-8">
-        <div className="flex justify-between items-center mb-4">
-          <h2 className="text-lg font-semibold text-white">My Campaigns</h2>
-          <button
-            onClick={fetchCampaigns}
-            disabled={loading}
-            className="flex items-center px-4 py-2 rounded-full bg-indigo-600 hover:bg-indigo-700 text-sm text-white"
-          >
-            {loading ? (
-              <>
-                <Loader2 className="animate-spin h-4 w-4 mr-2" />
-                Refreshing...
-              </>
-            ) : (
-              "Refresh"
-            )}
-          </button>
-        </div>
-        {loading ? (
-          <div className="flex justify-center">
-            <Loader2 className="animate-spin h-8 w-8 text-indigo-600" />
-          </div>
-        ) : campaigns.length === 0 ? (
-          <p className="text-sm text-gray-400">You haven&apos;t created any campaigns yet.</p>
-        ) : (
-          <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-6">
-            {campaigns.map((campaign) => (
-              <div
-                key={campaign._id}
-                className="bg-[#222226] hover:bg-[#2a2a2e] transition-all rounded-xl border border-white/10 p-5 shadow-sm"
-              >
-                <h3 className="text-lg font-semibold mb-1">{campaign.title}</h3>
-                <p className="text-sm text-gray-400">{campaign.description}</p>
-                <p className="text-sm text-gray-400 mt-2">Price: {campaign.price}</p>
-                <p className="text-sm text-gray-400">Category: {campaign.category || "N/A"}</p>
-                <div className="mt-4 flex gap-2">
-                  <button
-                    onClick={() => openEditModal(campaign._id)}
-                    className="px-4 py-1.5 rounded-full bg-indigo-600 hover:bg-indigo-700 text-sm"
-                  >
-                    Edit
-                  </button>
-                  <button
-                    onClick={() => handleDelete(campaign._id)}
-                    className="px-4 py-1.5 rounded-full bg-red-600 hover:bg-red-700 text-sm"
-                  >
-                    Delete
-                  </button>
-                </div>
-              </div>
-            ))}
-          </div>
-        )}
-      </div>
+      <MyCampaign
+        campaigns={campaigns}
+        loading={loading}
+        fetchCampaigns={fetchCampaigns}
+        openEditModal={openEditModal}
+        handleDelete={handleDelete}
+        backendUrl={backendUrl}
+        user={user}
+        token={token}
+      />
 
       {/* Edit Modal */}
       {isModalOpen && editCampaign && (
         <div className="fixed inset-0 bg-black/50 flex items-center justify-center z-50">
-          <div className="bg-[#1a1a1d] rounded-xl p-6 w-full max-w-lg border border-white/10">
-            <h2 className="text-lg font-semibold mb-4 text-white">Edit Campaign</h2>
+          <div className="bg-[#1a1a1d] h-[90%] overflow-y-scroll rounded-xl p-6 w-full max-w-lg border border-white/10">
+            <h2 className="text-lg font-semibold mb-4 text-white">
+              Edit Campaign
+            </h2>
             <form onSubmit={handleUpdate} className="space-y-4">
               <div>
-                <label className="block text-sm font-medium text-gray-300">Title</label>
+                <label className="block text-sm font-medium text-gray-400">
+                  Title
+                </label>
                 <input
                   type="text"
                   value={editCampaign.title}
                   onChange={(e) =>
                     setEditCampaign({ ...editCampaign, title: e.target.value })
                   }
-                  className="mt-1 block w-full px-4 py-2 rounded-full border border-gray-300 bg-[#222226] text-white shadow-sm focus:ring-indigo-500 focus:border-indigo-500 text-lg"
+                  className="mt-1 block w-full px-4 py-2 rounded-full border border-gray-600 bg-[#222226] text-white shadow-sm focus:ring-indigo-600 focus:border-indigo-600 text-sm"
                   required
                 />
               </div>
               <div>
-                <label className="block text-sm font-medium text-gray-300">Description</label>
+                <label className="block text-sm font-medium text-gray-400">
+                  Description
+                </label>
                 <textarea
                   value={editCampaign.description}
                   onChange={(e) =>
-                    setEditCampaign({ ...editCampaign, description: e.target.value })
+                    setEditCampaign({
+                      ...editCampaign,
+                      description: e.target.value,
+                    })
                   }
-                  className="mt-1 block w-full px-4 py-2 rounded-xl border border-gray-300 bg-[#222226] text-white shadow-sm focus:ring-indigo-500 focus:border-indigo-500 text-lg"
+                  className="mt-1 block w-full px-4 py-2 rounded-xl border border-gray-600 bg-[#222226] text-white shadow-sm focus:ring-indigo-600 focus:border-indigo-600 text-sm"
                   required
                 />
               </div>
               <div>
-                <label className="block text-sm font-medium text-gray-300">
-                  Images (comma-separated URLs)
+                <label className="block text-sm font-medium text-gray-400">
+                  Images
                 </label>
+                {editCampaign.images.length > 0 && (
+                  <div className="mb-2">
+                    <p className="text-sm text-gray-400">Current Images:</p>
+                    <ul className="list-disc list-inside text-sm text-gray-500">
+                      {editCampaign.images.map((url, index) => (
+                        <li key={index}>
+                          <a
+                            href={url}
+                            target="_blank"
+                            rel="noopener noreferrer"
+                            className="underline hover:text-gray-300"
+                          >
+                            Image {index + 1}
+                          </a>
+                        </li>
+                      ))}
+                    </ul>
+                  </div>
+                )}
                 <input
-                  type="text"
-                  value={editCampaign.images.join(",")}
-                  onChange={(e) =>
-                    setEditCampaign({
-                      ...editCampaign,
-                      images: e.target.value.split(",").map((img) => img.trim()),
-                    })
-                  }
-                  className="mt-1 block w-full px-4 py-2 rounded-full border border-gray-300 bg-[#222226] text-white shadow-sm focus:ring-indigo-500 focus:border-indigo-500 text-lg"
+                  type="file"
+                  name="images"
+                  accept="image/*"
+                  multiple
+                  onChange={handleEditFileChange}
+                  className="mt-1 block w-full px-4 py-2 rounded-full border border-gray-600 bg-[#222226] text-gray-400 text-sm file:mr-4 file:py-2 file:px-4 file:rounded-full file:border-0 file:bg-indigo-600 file:text-white file:hover:bg-indigo-700"
                 />
               </div>
               <div>
-                <label className="block text-sm font-medium text-gray-300">Category</label>
+                <label className="block text-sm font-medium text-gray-400">
+                  Category
+                </label>
                 <input
                   type="text"
                   value={editCampaign.category}
                   onChange={(e) =>
-                    setEditCampaign({ ...editCampaign, category: e.target.value })
+                    setEditCampaign({
+                      ...editCampaign,
+                      category: e.target.value,
+                    })
                   }
-                  className="mt-1 block w-full px-4 py-2 rounded-full border border-gray-300 bg-[#222226] text-white shadow-sm focus:ring-indigo-500 focus:border-indigo-500 text-lg"
+                  className="mt-1 block w-full px-4 py-2 rounded-full border border-gray-600 bg-[#222226] text-white shadow-sm focus:ring-indigo-600 focus:border-indigo-600 text-sm"
                 />
               </div>
               <div>
-                <label className="block text-sm font-medium text-gray-300">Price</label>
+                <label className="block text-sm font-medium text-gray-400">
+                  Price
+                </label>
                 <input
                   type="number"
                   value={editCampaign.price}
@@ -467,7 +508,7 @@ export default function Campaign() {
                       price: parseFloat(e.target.value),
                     })
                   }
-                  className="mt-1 block w-full px-4 py-2 rounded-full border border-gray-300 bg-[#222226] text-white shadow-sm focus:ring-indigo-500 focus:border-indigo-500 text-lg"
+                  className="mt-1 block w-full px-4 py-2 rounded-full border border-gray-600 bg-[#222226] text-white shadow-sm focus:ring-indigo-600 focus:border-indigo-600 text-sm"
                   step="0.001"
                   min="0.001"
                   required
@@ -476,7 +517,7 @@ export default function Campaign() {
               <button
                 type="submit"
                 disabled={loading}
-                className="flex justify-center items-center w-full rounded-full font-medium text-lg px-8 py-3 bg-indigo-600 hover:bg-indigo-700"
+                className="flex justify-center items-center w-full rounded-full font-medium text-sm px-8 py-3 bg-indigo-600 hover:bg-indigo-700 text-white"
               >
                 {loading ? (
                   <>
@@ -488,15 +529,19 @@ export default function Campaign() {
                 )}
               </button>
             </form>
-            <h2 className="text-lg font-semibold mt-6 mb-4 text-white">Update Vote Options</h2>
+            <h2 className="text-lg font-semibold mt-6 mb-4 text-white">
+              Update Vote Options
+            </h2>
             <form onSubmit={handleUpdateOptions} className="space-y-4">
               {editOptions.map((opt, index) => (
                 <input
                   key={index}
                   type="text"
                   value={opt}
-                  onChange={(e) => handleEditOptionChange(index, e.target.value)}
-                  className="mt-1 block w-full px-4 py-2 rounded-full border border-gray-300 bg-[#222226] text-white shadow-sm focus:ring-indigo-500 focus:border-indigo-500 text-lg"
+                  onChange={(e) =>
+                    handleEditOptionChange(index, e.target.value)
+                  }
+                  className="mt-1 block w-full px-4 py-2 rounded-full border border-gray-600 bg-[#222226] text-white shadow-sm focus:ring-indigo-600 focus:border-indigo-600 text-sm"
                   placeholder={`Option ${index + 1}`}
                   required
                 />
@@ -504,14 +549,14 @@ export default function Campaign() {
               <button
                 type="button"
                 onClick={addEditOption}
-                className="mt-2 px-4 py-2 rounded-full bg-[#222226] text-gray-300 hover:bg-[#2a2a2e] text-sm"
+                className="mt-2 px-4 py-2 rounded-full bg-[#222226] text-gray-400 hover:bg-[#2a2a2e] text-sm"
               >
                 Add Option
               </button>
               <button
                 type="submit"
                 disabled={loading}
-                className="flex justify-center items-center w-full rounded-full font-medium text-lg px-8 py-3 bg-indigo-600 hover:bg-indigo-700"
+                className="flex justify-center items-center w-full rounded-full font-medium text-sm px-8 py-3 bg-indigo-600 hover:bg-indigo-700 text-white"
               >
                 {loading ? (
                   <>
@@ -525,7 +570,7 @@ export default function Campaign() {
             </form>
             <button
               onClick={() => setIsModalOpen(false)}
-              className="mt-4 px-4 py-2 rounded-full bg-gray-600 hover:bg-gray-700 text-sm w-full"
+              className="mt-4 px-4 py-2 rounded-full bg-gray-600 hover:bg-gray-700 text-sm w-full text-white"
             >
               Close
             </button>

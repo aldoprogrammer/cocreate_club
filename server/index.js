@@ -29,9 +29,12 @@ fs.readdirSync(pathsDir).forEach((file) => {
   Object.assign(baseSwagger.paths, doc);
 });
 
+app.use("/uploads", express.static(path.join(__dirname, "uploads")));
+
 // Routes
 app.use('/users', require('./routes/users'));
 app.use('/campaigns', require('./routes/campaigns'));
+
 
 // Swagger docs
 app.use('/api-docs', swaggerUi.serve);
@@ -40,7 +43,7 @@ app.get('/api-docs', swaggerUi.setup(baseSwagger));
 // npx nodemon index.js
 
 const HOST = process.env.HOST || 'localhost';
-const PORT = process.env.PORT || 3000;
+const PORT = process.env.PORT || 3001;
 
 app.listen(PORT, () => {
   console.log(`🚀 Server running at: ${HOST}:${PORT}`);

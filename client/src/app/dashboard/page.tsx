@@ -4,6 +4,7 @@ import { useEffect, useState } from 'react';
 import { useRouter } from 'next/navigation';
 import CreatorDashboard from '../components/creators/Dashboard';
 import AudienceDashboard from '../components/audience/Dashboard';
+import AdminDashboard from '../components/admin/Dashboard'; // ✅ Add this
 import Navbar from '../components/Navbar';
 
 export default function DashboardPage() {
@@ -13,7 +14,7 @@ export default function DashboardPage() {
   useEffect(() => {
     const user = JSON.parse(localStorage.getItem('user') || '{}');
     if (!user || !user.role) {
-      router.push('/login');
+      router.push('/');
     } else {
       setRole(user.role);
     }
@@ -24,7 +25,9 @@ export default function DashboardPage() {
   return (
     <div>
       <Navbar />
-      {role === 'creator' ? <CreatorDashboard /> : <AudienceDashboard />}
+      {role === 'creator' && <CreatorDashboard />}
+      {role === 'audience' && <AudienceDashboard />}
+      {role === 'admin' && <AdminDashboard />}
     </div>
   );
 }

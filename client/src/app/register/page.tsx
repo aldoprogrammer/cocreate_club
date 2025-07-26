@@ -32,7 +32,7 @@ export default function Register() {
       const backendUrl = process.env.NEXT_PUBLIC_BACKEND_URL;
       await axios.post(`${backendUrl}/users/register`, formData);
       toast.success("Registration successful!");
-      router.push("/auth/login");
+      router.push("/");
     } catch (error: any) {
       const msg = error?.response?.data?.message || "Registration failed!";
       toast.error(msg);
@@ -156,7 +156,7 @@ export default function Register() {
           </button>
           <button
             type="button"
-            onClick={() => router.push("/auth/login")}
+            onClick={() => router.push("/")}
             className="flex justify-center mt-6 items-center w-full rounded-md border border-gray-300 bg-white px-4 py-2 text-sm font-medium text-gray-700 shadow-sm hover:bg-gray-50 focus:outline-none focus:ring-2 focus:ring-indigo-500 focus:ring-offset-2"
           >
             Login

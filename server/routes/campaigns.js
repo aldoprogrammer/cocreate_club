@@ -2,26 +2,62 @@ const express = require("express");
 const router = express.Router();
 const Campaign = require("../models/Campaign");
 const auth = require("../middleware/auth");
+const multer = require("multer");
+const path = require("path");
+
+// Configure multer for file uploads
+const storage = multer.diskStorage({
+  destination: (req, file, cb) => {
+    cb(null, "uploads/"); // Store files in uploads/ directory
+  },
+  filename: (req, file, cb) => {
+    const uniqueSuffix = Date.now() + "-" + Math.round(Math.random() * 1e9);
+    cb(null, `${uniqueSuffix}-${file.originalname}`);
+  },
+});
+
+const fileFilter = (req, file, cb) => {
+  if (file.mimetype.startsWith("image/")) {
+    cb(null, true);
+  } else {
+    cb(new Error("Only image files are allowed"), false);
+  }
+};
+
+const upload = multer({
+  storage,
+  fileFilter,
+  limits: { fileSize: 50 * 1024 * 1024 }, // 50MB limit
+});
+
+// Serve uploaded images statically
+router.use("/uploads", express.static(path.join(__dirname, "../uploads")));
 
 // CREATE
-router.post("/", auth, async (req, res) => {
+router.post("/", auth, upload.array("images"), async (req, res) => {
   try {
-    const { title, description, images, category, price, options } = req.body;
+    const { title, description, category, price, options } = req.body;
 
     if (!Array.isArray(options) || options.length < 2)
-      return res.status(400).send({ error: "At least two vote options are required" });
+      return res
+        .status(400)
+        .send({ error: "At least two vote options are required" });
 
     if (price < 0.001)
       return res.status(400).send({ error: "Minimum price is 0.001" });
 
+    const imageUrls = req.files
+      ? req.files.map((file) => `/uploads/${file.filename}`)
+      : [];
+
     const campaign = new Campaign({
       title,
       description,
-      images,
+      images: imageUrls,
       category,
       price,
       creator: req.user._id,
-       options: options.map(label => ({ label })), // ✅ FIXED
+      options: options.map((label) => ({ label })),
     });
 
     await campaign.save();
@@ -59,7 +95,7 @@ router.get("/:id", async (req, res) => {
 });
 
 // UPDATE
-router.patch("/:id", auth, async (req, res) => {
+router.patch("/:id", auth, upload.array("images"), async (req, res) => {
   const allowed = ["title", "description", "images", "category", "price"];
   const updates = Object.keys(req.body);
   const isValid = updates.every((key) => allowed.includes(key));
@@ -72,7 +108,13 @@ router.patch("/:id", auth, async (req, res) => {
     if (!campaign.creator.equals(req.user._id))
       return res.status(403).send({ error: "Unauthorized" });
 
-    updates.forEach(key => (campaign[key] = req.body[key]));
+    updates.forEach((key) => {
+      if (key !== "images") campaign[key] = req.body[key];
+    });
+
+    if (req.files && req.files.length > 0) {
+      campaign.images = req.files.map((file) => `/uploads/${file.filename}`);
+    }
 
     await campaign.save();
     res.send(campaign);
@@ -109,7 +151,7 @@ router.patch("/:id/options", auth, async (req, res) => {
     if (!campaign.creator.equals(req.user._id))
       return res.status(403).send({ error: "Unauthorized" });
 
-    campaign.options = options.map(label => ({ label, count: 0 }));
+    campaign.options = options.map((label) => ({ label, count: 0 }));
     await campaign.save();
 
     res.send({ message: "Options updated", options: campaign.options });
@@ -118,7 +160,7 @@ router.patch("/:id/options", auth, async (req, res) => {
   }
 });
 
-// VOTE (PAKE INDEX)
+// VOTE
 router.post("/:id/vote", auth, async (req, res) => {
   try {
     const { voteIndex, amountPaid } = req.body;
@@ -129,7 +171,7 @@ router.post("/:id/vote", auth, async (req, res) => {
     if (amountPaid < campaign.price)
       return res.status(400).send({ error: "Insufficient payment" });
 
-    const alreadyVoted = campaign.participants.find(p =>
+    const alreadyVoted = campaign.participants.find((p) =>
       p.user.equals(req.user._id)
     );
     if (alreadyVoted) return res.status(400).send({ error: "Already voted" });

@@ -3,6 +3,7 @@ import { useState } from "react";
 import axios from "axios";
 import { useRouter } from "next/navigation";
 import toast from "react-hot-toast";
+import { COLORS } from "@/app/constants/colors";
 
 export default function Register() {
   const [formData, setFormData] = useState({
@@ -41,7 +42,7 @@ export default function Register() {
   };
 
   return (
-    <div className="min-h-screen flex items-center justify-center bg-neutral-50 px-4">
+    <div className="min-h-screen flex items-center justify-center px-4" style={{ backgroundColor: COLORS.background.dark }}>
       <div className="w-full max-w-lg bg-white p-10 rounded-3xl shadow-md border border-gray-200">
         <h2 className="text-4xl font-semibold text-center text-gray-800 mb-8">
           Create Account

@@ -20,7 +20,7 @@ export default function AuthModal({ isOpen, onClose }: AuthModalProps) {
       // Use setTimeout to simulate a delay for demonstration purposes
       // In a real application, you would replace this with your navigation logic
       await new Promise(resolve => setTimeout(resolve, 1000));
-      await router.push(`${role}/login`);
+      await router.push('/auth/login');
     } catch (error) {
       console.error("Navigation failed:", error);
     } finally {

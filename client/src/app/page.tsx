@@ -1,14 +1,14 @@
 "use client";
 
-import { useState } from "react";
+import { useRouter } from "next/navigation";
 import { ConnectButton } from "thirdweb/react";
 import { client } from "./client";
 import Header from "./components/Header";
-import AuthModal from "./components/AuthModal";
 import { COLORS } from "./constants/colors";
 import ThirdwebResources from "./components/ThirdwebResources";
+
 export default function Home() {
-  const [isAuthModalOpen, setIsAuthModalOpen] = useState(false);
+  const router = useRouter();
 
   return (
     <main
@@ -20,7 +20,7 @@ export default function Home() {
 
         <div className="flex justify-center mb-20">
           <button
-            onClick={() => setIsAuthModalOpen(true)}
+            onClick={() => router.push("/auth/login")}
             className="px-8 py-3 rounded-full font-medium text-lg"
             style={{
               backgroundColor: COLORS.primary.DEFAULT,
@@ -32,11 +32,6 @@ export default function Home() {
         </div>
 
         <ThirdwebResources />
-
-        <AuthModal
-          isOpen={isAuthModalOpen}
-          onClose={() => setIsAuthModalOpen(false)}
-        />
       </div>
     </main>
   );

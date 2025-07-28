@@ -10,8 +10,8 @@ require('dotenv').config();
 const app = express();
 app.use(express.json());
 app.use(cors({
-  origin: 'http://localhost:3000', // frontend URL
-  credentials: true,               // kalau pakai cookie / auth
+  origin: process.env.FRONTEND_URL,
+  credentials: true,
 }));
 // MongoDB Connection
 mongoose.connect(process.env.MONGODB_URI)

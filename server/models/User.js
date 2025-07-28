@@ -28,7 +28,7 @@ const userSchema = new mongoose.Schema(
     },
     role: {
       type: String,
-      enum: ["audience", "creator"],
+      enum: ["audience", "creator", "admin"],
       default: "audience",
     },
     campaigns: [

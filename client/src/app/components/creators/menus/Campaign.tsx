@@ -13,9 +13,12 @@ interface Campaign {
   images: string[];
   category: string;
   price: number;
+  status: string;
   options: { label: string; count: number; _id: string }[];
   creator: { _id: string; fullName: string };
-  participants?: { user: string; hasPaid: boolean; _id: string }[];
+  participants?: { user: { _id: string; fullName: string; email: string }; hasPaid: boolean; amountPaid: number; _id: string }[];
+  topParticipantImage?: string;
+  allParticipantsImage?: string;
   createdAt: string;
   updatedAt: string;
   __v: number;
@@ -38,17 +41,23 @@ export default function Campaign() {
     category: string;
     price: string;
     options: string[];
+    topParticipantImage: FileList | null;
+    allParticipantsImage: FileList | null;
   }>({
     title: "",
     description: "",
     images: null,
     category: "",
     price: "",
-    options: ["", ""], // Minimum 2 options
+    options: ["", ""],
+    topParticipantImage: null,
+    allParticipantsImage: null,
   });
   const [editCampaign, setEditCampaign] = useState<Campaign | null>(null);
   const [editOptions, setEditOptions] = useState<string[]>(["", ""]);
   const [editImages, setEditImages] = useState<FileList | null>(null);
+  const [editTopParticipantImage, setEditTopParticipantImage] = useState<FileList | null>(null);
+  const [editAllParticipantsImage, setEditAllParticipantsImage] = useState<FileList | null>(null);
   const [isModalOpen, setIsModalOpen] = useState<boolean>(false);
 
   const backendUrl = process.env.NEXT_PUBLIC_BACKEND_URL;
@@ -87,19 +96,19 @@ export default function Campaign() {
   };
 
   const handleChange = (
-    e: React.ChangeEvent<HTMLInputElement | HTMLTextAreaElement>
+    e: React.ChangeEvent<HTMLInputElement | HTMLTextAreaElement | HTMLSelectElement>
   ) => {
     const { name, value } = e.target;
     setFormData({ ...formData, [name]: value });
   };
 
   const handleFileChange = (e: React.ChangeEvent<HTMLInputElement>) => {
-    const files = e.target.files;
+    const { name, files } = e.target;
     if (
       files &&
       Array.from(files).every((file) => file.type.startsWith("image/"))
     ) {
-      setFormData({ ...formData, images: files });
+      setFormData({ ...formData, [name]: files });
     } else {
       toast.error("Please select valid image files (e.g., PNG, JPEG)");
       e.target.value = ""; // Reset input
@@ -107,12 +116,14 @@ export default function Campaign() {
   };
 
   const handleEditFileChange = (e: React.ChangeEvent<HTMLInputElement>) => {
-    const files = e.target.files;
+    const { name, files } = e.target;
     if (
       files &&
       Array.from(files).every((file) => file.type.startsWith("image/"))
     ) {
-      setEditImages(files);
+      if (name === "images") setEditImages(files);
+      if (name === "topParticipantImage") setEditTopParticipantImage(files);
+      if (name === "allParticipantsImage") setEditAllParticipantsImage(files);
     } else {
       toast.error("Please select valid image files (e.g., PNG, JPEG)");
       e.target.value = ""; // Reset input
@@ -160,6 +171,16 @@ export default function Campaign() {
           data.append("images", file)
         );
       }
+      if (formData.topParticipantImage) {
+        Array.from(formData.topParticipantImage).forEach((file) =>
+          data.append("topParticipantImage", file)
+        );
+      }
+      if (formData.allParticipantsImage) {
+        Array.from(formData.allParticipantsImage).forEach((file) =>
+          data.append("allParticipantsImage", file)
+        );
+      }
 
       await axios.post(`${backendUrl}/campaigns`, data, {
         headers: {
@@ -175,9 +196,12 @@ export default function Campaign() {
         category: "",
         price: "",
         options: ["", ""],
+        topParticipantImage: null,
+        allParticipantsImage: null,
       });
-      (document.querySelector('input[type="file"]') as HTMLInputElement).value =
-        ""; // Reset file input
+      (document.querySelectorAll('input[type="file"]') as NodeListOf<HTMLInputElement>).forEach(
+        (input) => (input.value = "")
+      ); // Reset file inputs
       fetchCampaigns();
     } catch (error: any) {
       toast.error(error?.response?.data?.error || "Failed to create campaign");
@@ -199,8 +223,19 @@ export default function Campaign() {
       data.append("description", editCampaign.description);
       data.append("category", editCampaign.category);
       data.append("price", editCampaign.price.toString());
+      data.append("status", editCampaign.status);
       if (editImages) {
         Array.from(editImages).forEach((file) => data.append("images", file));
+      }
+      if (editTopParticipantImage) {
+        Array.from(editTopParticipantImage).forEach((file) =>
+          data.append("topParticipantImage", file)
+        );
+      }
+      if (editAllParticipantsImage) {
+        Array.from(editAllParticipantsImage).forEach((file) =>
+          data.append("allParticipantsImage", file)
+        );
       }
 
       await axios.patch(`${backendUrl}/campaigns/${editCampaign._id}`, data, {
@@ -212,8 +247,11 @@ export default function Campaign() {
       toast.success("Campaign updated successfully!");
       setIsModalOpen(false);
       setEditImages(null);
-      (document.querySelector('input[type="file"]') as HTMLInputElement).value =
-        ""; // Reset file input
+      setEditTopParticipantImage(null);
+      setEditAllParticipantsImage(null);
+      (document.querySelectorAll('input[type="file"]') as NodeListOf<HTMLInputElement>).forEach(
+        (input) => (input.value = "")
+      ); // Reset file inputs
       fetchCampaigns();
     } catch (error: any) {
       toast.error(error?.response?.data?.error || "Failed to update campaign");
@@ -274,6 +312,8 @@ export default function Campaign() {
       setEditCampaign(campaign);
       setEditOptions(campaign.options.map((opt: any) => opt.label));
       setEditImages(null);
+      setEditTopParticipantImage(null);
+      setEditAllParticipantsImage(null);
       setIsModalOpen(true);
     } catch (error: any) {
       toast.error("Failed to open edit modal");
@@ -324,6 +364,30 @@ export default function Campaign() {
               name="images"
               accept="image/*"
               multiple
+              onChange={handleFileChange}
+              className="mt-1 block w-full px-4 py-2 rounded-full border border-gray-600 bg-[#222226] text-gray-400 text-sm file:mr-4 file:py-2 file:px-4 file:rounded-full file:border-0 file:bg-indigo-600 file:text-white file:hover:bg-indigo-700"
+            />
+          </div>
+          <div>
+            <label className="block text-sm font-medium text-gray-400">
+              Top Participant Image (Optional)
+            </label>
+            <input
+              type="file"
+              name="topParticipantImage"
+              accept="image/*"
+              onChange={handleFileChange}
+              className="mt-1 block w-full px-4 py-2 rounded-full border border-gray-600 bg-[#222226] text-gray-400 text-sm file:mr-4 file:py-2 file:px-4 file:rounded-full file:border-0 file:bg-indigo-600 file:text-white file:hover:bg-indigo-700"
+            />
+          </div>
+          <div>
+            <label className="block text-sm font-medium text-gray-400">
+              All Participants Image (Optional)
+            </label>
+            <input
+              type="file"
+              name="allParticipantsImage"
+              accept="image/*"
               onChange={handleFileChange}
               className="mt-1 block w-full px-4 py-2 rounded-full border border-gray-600 bg-[#222226] text-gray-400 text-sm file:mr-4 file:py-2 file:px-4 file:rounded-full file:border-0 file:bg-indigo-600 file:text-white file:hover:bg-indigo-700"
             />
@@ -458,7 +522,7 @@ export default function Campaign() {
                       {editCampaign.images.map((url, index) => (
                         <li key={index}>
                           <a
-                            href={url}
+                            href={`${backendUrl}${url}`}
                             target="_blank"
                             rel="noopener noreferrer"
                             className="underline hover:text-gray-300"
@@ -475,6 +539,56 @@ export default function Campaign() {
                   name="images"
                   accept="image/*"
                   multiple
+                  onChange={handleEditFileChange}
+                  className="mt-1 block w-full px-4 py-2 rounded-full border border-gray-600 bg-[#222226] text-gray-400 text-sm file:mr-4 file:py-2 file:px-4 file:rounded-full file:border-0 file:bg-indigo-600 file:text-white file:hover:bg-indigo-700"
+                />
+              </div>
+              <div>
+                <label className="block text-sm font-medium text-gray-400">
+                  Top Participant Image
+                </label>
+                {editCampaign.topParticipantImage && (
+                  <div className="mb-2">
+                    <p className="text-sm text-gray-400">Current Top Participant Image:</p>
+                    <a
+                      href={`${backendUrl}${editCampaign.topParticipantImage}`}
+                      target="_blank"
+                      rel="noopener noreferrer"
+                      className="underline hover:text-gray-300 text-sm"
+                    >
+                      View Image
+                    </a>
+                  </div>
+                )}
+                <input
+                  type="file"
+                  name="topParticipantImage"
+                  accept="image/*"
+                  onChange={handleEditFileChange}
+                  className="mt-1 block w-full px-4 py-2 rounded-full border border-gray-600 bg-[#222226] text-gray-400 text-sm file:mr-4 file:py-2 file:px-4 file:rounded-full file:border-0 file:bg-indigo-600 file:text-white file:hover:bg-indigo-700"
+                />
+              </div>
+              <div>
+                <label className="block text-sm font-medium text-gray-400">
+                  All Participants Image
+                </label>
+                {editCampaign.allParticipantsImage && (
+                  <div className="mb-2">
+                    <p className="text-sm text-gray-400">Current All Participants Image:</p>
+                    <a
+                      href={`${backendUrl}${editCampaign.allParticipantsImage}`}
+                      target="_blank"
+                      rel="noopener noreferrer"
+                      className="underline hover:text-gray-300 text-sm"
+                    >
+                      View Image
+                    </a>
+                  </div>
+                )}
+                <input
+                  type="file"
+                  name="allParticipantsImage"
+                  accept="image/*"
                   onChange={handleEditFileChange}
                   className="mt-1 block w-full px-4 py-2 rounded-full border border-gray-600 bg-[#222226] text-gray-400 text-sm file:mr-4 file:py-2 file:px-4 file:rounded-full file:border-0 file:bg-indigo-600 file:text-white file:hover:bg-indigo-700"
                 />
@@ -513,6 +627,25 @@ export default function Campaign() {
                   min="0.001"
                   required
                 />
+              </div>
+              <div>
+                <label className="block text-sm font-medium text-gray-400">
+                  Status
+                </label>
+                <select
+                  name="status"
+                  value={editCampaign.status}
+                  onChange={(e) =>
+                    setEditCampaign({
+                      ...editCampaign,
+                      status: e.target.value,
+                    })
+                  }
+                  className="mt-1 block w-full px-4 py-2 rounded-full border border-gray-600 bg-[#222226] text-white shadow-sm focus:ring-indigo-600 focus:border-indigo-600 text-sm"
+                >
+                  <option value="active">Active</option>
+                  <option value="finished">Finished</option>
+                </select>
               </div>
               <button
                 type="submit"

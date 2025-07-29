@@ -11,9 +11,12 @@ interface Campaign {
   images: string[];
   category: string;
   price: number;
+  status: string;
   options: { label: string; count: number; _id: string }[];
   creator: { _id: string; fullName: string };
-  participants?: { user: string; hasPaid: boolean; _id: string }[];
+  participants?: { user: { _id: string; fullName: string; email: string }; hasPaid: boolean; amountPaid: number; _id: string }[];
+  topParticipantImage?: string;
+  allParticipantsImage?: string;
   createdAt: string;
   updatedAt: string;
   __v: number;
@@ -96,8 +99,33 @@ export default function MyCampaign({
                 )}
                 <h3 className="text-lg font-semibold mb-1 text-white">{campaign.title}</h3>
                 <p className="text-sm text-gray-400">{campaign.description}</p>
-                <p className="text-sm text-gray-400 mt-2">Price: {campaign.price}</p>
+                <p className="text-sm text-gray-400 mt-2">Minimum Price to Participate: {campaign.price}</p>
                 <p className="text-sm text-gray-400">Category: {campaign.category || "N/A"}</p>
+                <p className="text-sm text-gray-400">
+                  Status: <span className={campaign.status === 'active' ? 'text-green-500' : 'text-red-500'}>{campaign.status}</span>
+                </p>
+                {campaign.topParticipantImage && (
+                  <p className="text-sm text-gray-400 mt-2">
+                    Top Participant Image: <a href={`${backendUrl}${campaign.topParticipantImage}`} target="_blank" rel="noopener noreferrer" className="underline hover:text-gray-300">View</a>
+                  </p>
+                )}
+                {campaign.allParticipantsImage && (
+                  <p className="text-sm text-gray-400 mt-2">
+                    All Participants Image: <a href={`${backendUrl}${campaign.allParticipantsImage}`} target="_blank" rel="noopener noreferrer" className="underline hover:text-gray-300">View</a>
+                  </p>
+                )}
+                {campaign.participants && campaign.participants.length > 0 && (
+                  <div className="mt-2">
+                    <p className="text-sm text-gray-400">Participants:</p>
+                    <ul className="list-disc list-inside text-sm text-gray-500">
+                      {campaign.participants.map((participant) => (
+                        <li key={participant._id}>
+                          {participant.user.fullName} ({participant.hasPaid ? `Paid ${participant.amountPaid}` : "Not Paid"})
+                        </li>
+                      ))}
+                    </ul>
+                  </div>
+                )}
                 <div className="flex justify-end gap-2 mt-4">
                   <button
                     onClick={() => openEditModal(campaign)}

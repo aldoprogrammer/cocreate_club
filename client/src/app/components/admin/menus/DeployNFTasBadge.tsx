@@ -11,16 +11,12 @@ import {
   ConnectButton,
   useActiveAccount,
 } from "thirdweb/react";
-import { smartWallet } from "thirdweb/wallets";
 import { etherlinkTestnet } from "@/lib/etherlinkChain";
 import { client } from "@/app/client";
 
-const CONTRACT_ADDRESS =
-  process.env.NEXT_PUBLIC_CONTRACT_ADDRESS!;
-const EXPLORER_PREFIX =
-  process.env.NEXT_PUBLIC_EXPLORER_PREFIX!;
-const NATIVE_TOKEN_ADDRESS =
-  process.env.NEXT_PUBLIC_NATIVE_TOKEN_ADDRESS!;
+const CONTRACT_ADDRESS = process.env.NEXT_PUBLIC_CONTRACT_ADDRESS!;
+const EXPLORER_PREFIX = process.env.NEXT_PUBLIC_EXPLORER_PREFIX!;
+const NATIVE_TOKEN_ADDRESS = process.env.NEXT_PUBLIC_NATIVE_TOKEN_ADDRESS!;
 
 export default function DeployNFTasBadge() {
   const account = useActiveAccount();
@@ -29,37 +25,23 @@ export default function DeployNFTasBadge() {
     description: "",
     image: undefined as File | undefined,
   });
-  const [price, setPrice] = useState("");
-  const [maxSupply, setMaxSupply] = useState("100");
+  const [price, setPrice] = useState("0.001");
+  const [maxSupply, setMaxSupply] = useState("1");
   const [isMinting, setIsMinting] = useState(false);
   const [txHash, setTxHash] = useState<string | null>(null);
-  const [claimTxHash, setClaimTxHash] = useState<
-    string | null
-  >(null);
-  const [tokenId, setTokenId] = useState<bigint | null>(
-    null,
-  );
-
-  const sponsorWallet = smartWallet({
-    chain: etherlinkTestnet,
-    sponsorGas: true,
-  });
+  const [claimTxHash, setClaimTxHash] = useState<string | null>(null);
+  const [tokenId, setTokenId] = useState<bigint | null>(null);
 
   // Helper: parse price string to number (in ether)
-  function parsePriceToNumber(
-    priceStr: string,
-  ): number | null {
+  function parsePriceToNumber(priceStr: string): number | null {
     const priceNum = Number(priceStr);
-    if (!priceStr || isNaN(priceNum) || priceNum < 0)
-      return null;
+    if (!priceStr || isNaN(priceNum) || priceNum < 0) return null;
     return priceNum;
   }
 
   let claimInfo = "";
   if (maxSupply && Number(maxSupply) > 0) {
-    claimInfo =
-      maxSupply +
-      " people can claim this NFT Badge to support your campaign.";
+    claimInfo = `Only ${maxSupply} people can claim this Top Spender NFT Badge.`;
   } else {
     claimInfo = "Isi jumlah maksimal supporter";
   }
@@ -69,7 +51,8 @@ export default function DeployNFTasBadge() {
       <ConnectButton
         client={client}
         chain={etherlinkTestnet}
-        wallets={[sponsorWallet]}
+        // By default, uses standard wallets available in thirdweb.
+        // You may optionally specify wallets={[wallet1, wallet2, ...]}
       />
       {account ? (
         <div className="text-green-900 bg-green-100 rounded p-2 my-2 font-mono text-xs">
@@ -81,16 +64,12 @@ export default function DeployNFTasBadge() {
         </div>
       )}
 
-      <h2 className="text-xl font-bold">
-        Create Your NFT Badge
-      </h2>
+      <h2 className="text-xl font-bold">Create Top Spender NFT Badge</h2>
       <input
         type="text"
         placeholder="Name"
         value={metadata.name}
-        onChange={(e) =>
-          setMetadata({ ...metadata, name: e.target.value })
-        }
+        onChange={(e) => setMetadata({ ...metadata, name: e.target.value })}
         className="w-full p-2 border rounded"
       />
       <textarea
@@ -116,42 +95,38 @@ export default function DeployNFTasBadge() {
         }}
         className="w-full"
       />
+      <div>
+      <label htmlFor="">Price for claim 0.001 (XTZ)</label>
       <input
         type="number"
         min="0"
         step="0.0001"
-        placeholder="Price for claim (XTZ)"
+        placeholder="Price for claim 0.001 (XTZ)"
         value={price}
+        disabled
         onChange={(e) => setPrice(e.target.value)}
-        className="w-full p-2 border rounded"
+        className="w-full p-2 border rounded bg-gray-100 text-gray-500 cursor-not-allowed"
       />
-      <input
+</div>
+      {/* <input
         type="number"
         min="1"
         step="1"
         placeholder="Total supply (max supporters)"
         value={maxSupply}
-        onChange={(e) => setMaxSupply(e.target.value)}
+        disabled
         className="w-full p-2 border rounded"
-      />
-      <div className="text-xs text-gray-600 mb-2">
-        {claimInfo}
-      </div>
+      /> */}
+      <div className="text-xs text-gray-600 mb-2">{claimInfo}</div>
 
       <TransactionButton
         transaction={async () => {
-          if (!account)
-            throw new Error("Connect your wallet.");
-          if (
-            !metadata.name ||
-            !metadata.description ||
-            !metadata.image
-          )
+          if (!account) throw new Error("Connect your wallet.");
+          if (!metadata.name || !metadata.description || !metadata.image)
             throw new Error("Fill in all NFT details.");
 
           const priceNumber = parsePriceToNumber(price);
-          if (priceNumber === null)
-            throw new Error("Enter a valid price.");
+          if (priceNumber === null) throw new Error("Enter a valid price.");
 
           setIsMinting(true);
           setTxHash(null);
@@ -184,9 +159,7 @@ export default function DeployNFTasBadge() {
             transaction: lazyMintTx,
             account,
           });
-          setTxHash(
-            lazyMintResult?.transactionHash || null,
-          );
+          setTxHash(lazyMintResult?.transactionHash || null);
 
           // 2. Set claim conditions (using the recommended API)
           const claimCondTx = setClaimConditions({
@@ -194,9 +167,7 @@ export default function DeployNFTasBadge() {
             tokenId: newTokenId,
             phases: [
               {
-                maxClaimableSupply: BigInt(
-                  maxSupply || "1",
-                ),
+                maxClaimableSupply: BigInt(maxSupply || "1"),
                 maxClaimablePerWallet: 1n,
                 currencyAddress: NATIVE_TOKEN_ADDRESS,
                 price: priceNumber,
@@ -208,9 +179,7 @@ export default function DeployNFTasBadge() {
             transaction: claimCondTx,
             account,
           });
-          setClaimTxHash(
-            claimCondTxResult?.transactionHash || null,
-          );
+          setClaimTxHash(claimCondTxResult?.transactionHash || null);
 
           setIsMinting(false);
           return lazyMintResult;
@@ -249,8 +218,7 @@ export default function DeployNFTasBadge() {
           <b>Badge ready to claim!</b>
           <br />
           <span>
-            <span className="text-xs">tokenId:</span>{" "}
-            {tokenId.toString()}
+            <span className="text-xs">tokenId:</span> {tokenId.toString()}
           </span>
         </div>
       )}

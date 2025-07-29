@@ -14,9 +14,12 @@ interface Campaign {
   images: string[];
   category: string;
   price: number;
+  status: string;
   options: { label: string; count: number; _id: string }[];
   creator: { _id: string; fullName: string };
-  participants?: { user: string; hasPaid: boolean; _id: string }[];
+  participants?: { user: { _id: string; fullName: string; email: string }; hasPaid: boolean; amountPaid: number; _id: string }[];
+  topParticipantImage?: string;
+  allParticipantsImage?: string;
   createdAt: string;
   updatedAt: string;
   __v: number;
@@ -51,16 +54,16 @@ export default function CampaignPublic() {
   };
 
   return (
-    <div className="min-h-screen bg-[#121214] text-white">
+    <div className="min-h-screen bg-[#0f0f12] text-white">
       <Navbar />
-      <div className="px-6 py-10">
-        <div className="bg-[#1a1a1d] rounded-xl border border-white/10 p-6 mb-8">
-          <div className="flex justify-between items-center mb-4">
-            <h2 className="text-lg font-semibold text-white">All Campaigns</h2>
+      <div className="px-6 py-12 max-w-7xl mx-auto">
+        <div className="bg-[#1a1a1d] rounded-3xl border border-white/10 p-8 shadow-lg shadow-indigo-500/10">
+          <div className="flex justify-between items-center mb-6">
+            <h2 className="text-2xl font-bold text-white tracking-tight">All Campaigns</h2>
             <button
               onClick={fetchCampaigns}
               disabled={loading}
-              className="flex items-center px-4 py-2 rounded-full bg-indigo-600 hover:bg-indigo-700 text-sm text-white"
+              className="flex items-center px-6 py-2 rounded-full bg-gradient-to-r from-indigo-600 to-purple-600 hover:from-indigo-700 hover:to-purple-700 text-sm font-semibold text-white transition-all duration-300"
             >
               {loading ? (
                 <>
@@ -74,7 +77,7 @@ export default function CampaignPublic() {
           </div>
           {loading ? (
             <div className="flex justify-center">
-              <Loader2 className="animate-spin h-8 w-8 text-indigo-600" />
+              <Loader2 className="animate-spin h-8 w-8 text-indigo-500" />
             </div>
           ) : campaigns.length === 0 ? (
             <p className="text-sm text-gray-400">No campaigns available.</p>

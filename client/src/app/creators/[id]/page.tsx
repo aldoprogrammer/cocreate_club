@@ -22,9 +22,17 @@ interface Campaign {
   images: string[];
   category: string;
   price: number;
+  status: string;
   options: { label: string; count: number; _id: string }[];
   creator: { _id: string; fullName: string };
-  participants?: { user: string; hasPaid: boolean; _id: string }[];
+  participants?: {
+    user: { _id: string; fullName: string; email: string };
+    hasPaid: boolean;
+    amountPaid: number;
+    _id: string;
+  }[];
+  topParticipantImage?: string;
+  allParticipantsImage?: string;
   createdAt: string;
   updatedAt: string;
   __v: number;
@@ -100,11 +108,17 @@ export default function CreatorDetail() {
       <Navbar />
       <div className="px-6 py-10">
         <div className="bg-[#1a1a1d] rounded-xl border border-white/10 p-6 mb-8">
-          <h2 className="text-lg font-semibold mb-4 text-white">{creator.fullName}</h2>
+          <h2 className="text-lg font-semibold mb-4 text-white">
+            {creator.fullName}
+          </h2>
           <p className="text-sm text-gray-400">Email: {creator.email}</p>
-          <h3 className="text-md font-semibold mt-6 mb-4 text-white">Campaigns by {creator.fullName}</h3>
+          <h3 className="text-md font-semibold mt-6 mb-4 text-white">
+            Campaigns by {creator.fullName}
+          </h3>
           {campaigns.length === 0 ? (
-            <p className="text-sm text-gray-400">No campaigns created by this creator.</p>
+            <p className="text-sm text-gray-400">
+              No campaigns created by this creator.
+            </p>
           ) : (
             <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-6">
               {campaigns.map((campaign) => (

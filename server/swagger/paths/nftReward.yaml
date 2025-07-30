@@ -1,0 +1,137 @@
+/nft-rewards:
+  get:
+    summary: Get all NFT Rewards for all users
+    tags: [NFT Rewards]
+    security:
+      - bearerAuth: []
+    responses:
+      '200':
+        description: List of all NFT Rewards
+      '401':
+        description: Unauthorized
+      '500':
+        description: Server error
+  post:
+    summary: Create a new NFT Reward
+    tags: [NFT Rewards]
+    security:
+      - bearerAuth: []
+    requestBody:
+      required: true
+      content:
+        application/json:
+          schema:
+            type: object
+            properties:
+              userId:
+                type: string
+              campaignId:
+                type: string
+              tokenIds:
+                type: array
+                items:
+                  type: string
+    responses:
+      '201':
+        description: NFT Reward created successfully
+      '400':
+        description: Invalid input
+      '401':
+        description: Unauthorized
+
+/nft-rewards/user/{userId}:
+  get:
+    summary: Get all NFT Rewards for a user
+    tags: [NFT Rewards]
+    security:
+      - bearerAuth: []
+    parameters:
+      - in: path
+        name: userId
+        required: true
+        schema:
+          type: string
+    responses:
+      '200':
+        description: List of NFT Rewards
+      '401':
+        description: Unauthorized
+      '500':
+        description: Server error
+
+/nft-rewards/{id}:
+  get:
+    summary: Get NFT Reward by ID
+    tags: [NFT Rewards]
+    security:
+      - bearerAuth: []
+    parameters:
+      - in: path
+        name: id
+        required: true
+        schema:
+          type: string
+    responses:
+      '200':
+        description: NFT Reward details
+      '401':
+        description: Unauthorized
+      '404':
+        description: NFT Reward not found
+      '400':
+        description: Invalid ID
+  patch:
+    summary: Update NFT Reward
+    tags: [NFT Rewards]
+    security:
+      - bearerAuth: []
+    parameters:
+      - in: path
+        name: id
+        required: true
+        schema:
+          type: string
+    requestBody:
+      required: true
+      content:
+        application/json:
+          schema:
+            type: object
+            properties:
+              tokenIds:
+                type: array
+                items:
+                  type: string
+    responses:
+      '200':
+        description: NFT Reward updated
+      '400':
+        description: Invalid updates
+      '401':
+        description: Unauthorized
+      '403':
+        description: Forbidden
+      '404':
+        description: NFT Reward not found
+  delete:
+    summary: Delete NFT Reward
+    tags: [NFT Rewards]
+    security:
+      - bearerAuth: []
+    parameters:
+      - in: path
+        name: id
+        required: true
+        schema:
+          type: string
+    responses:
+      '200':
+        description: NFT Reward deleted
+      '401':
+        description: Unauthorized
+      '403':
+        description: Forbidden
+      '404':
+        description: NFT Reward not found
+      '500':
+        description: Server error

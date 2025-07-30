@@ -34,7 +34,11 @@ const upload = multer({
 router.use("/uploads", express.static(path.join(__dirname, "../uploads")));
 
 // CREATE
-router.post("/", auth, upload.array("images"), async (req, res) => {
+router.post("/", auth, upload.fields([
+  { name: "images", maxCount: 10 },
+  { name: "topParticipantImage", maxCount: 1 },
+  { name: "allParticipantsImage", maxCount: 1 }
+]), async (req, res) => {
   try {
     const { title, description, category, price, options } = req.body;
 
@@ -46,8 +50,8 @@ router.post("/", auth, upload.array("images"), async (req, res) => {
     if (price < 0.001)
       return res.status(400).send({ error: "Minimum price is 0.001" });
 
-    const imageUrls = req.files
-      ? req.files.map((file) => `/uploads/${file.filename}`)
+    const imageUrls = req.files.images
+      ? req.files.images.map((file) => `/uploads/${file.filename}`)
       : [];
 
     const campaign = new Campaign({
@@ -58,6 +62,12 @@ router.post("/", auth, upload.array("images"), async (req, res) => {
       price,
       creator: req.user._id,
       options: options.map((label) => ({ label })),
+      topParticipantImage: req.files.topParticipantImage 
+        ? `/uploads/${req.files.topParticipantImage[0].filename}` 
+        : undefined,
+      allParticipantsImage: req.files.allParticipantsImage 
+        ? `/uploads/${req.files.allParticipantsImage[0].filename}` 
+        : undefined,
     });
 
     await campaign.save();
@@ -95,8 +105,12 @@ router.get("/:id", async (req, res) => {
 });
 
 // UPDATE
-router.patch("/:id", auth, upload.array("images"), async (req, res) => {
-  const allowed = ["title", "description", "images", "category", "price"];
+router.patch("/:id", auth, upload.fields([
+  { name: "images", maxCount: 10 },
+  { name: "topParticipantImage", maxCount: 1 },
+  { name: "allParticipantsImage", maxCount: 1 }
+]), async (req, res) => {
+  const allowed = ["title", "description", "category", "price", "status", "topParticipantImage", "allParticipantsImage"];
   const updates = Object.keys(req.body);
   const isValid = updates.every((key) => allowed.includes(key));
 
@@ -109,11 +123,17 @@ router.patch("/:id", auth, upload.array("images"), async (req, res) => {
       return res.status(403).send({ error: "Unauthorized" });
 
     updates.forEach((key) => {
-      if (key !== "images") campaign[key] = req.body[key];
+      campaign[key] = req.body[key];
     });
 
-    if (req.files && req.files.length > 0) {
-      campaign.images = req.files.map((file) => `/uploads/${file.filename}`);
+    if (req.files.images && req.files.images.length > 0) {
+      campaign.images = req.files.images.map((file) => `/uploads/${file.filename}`);
+    }
+    if (req.files.topParticipantImage && req.files.topParticipantImage.length > 0) {
+      campaign.topParticipantImage = `/uploads/${req.files.topParticipantImage[0].filename}`;
+    }
+    if (req.files.allParticipantsImage && req.files.allParticipantsImage.length > 0) {
+      campaign.allParticipantsImage = `/uploads/${req.files.allParticipantsImage[0].filename}`;
     }
 
     await campaign.save();
@@ -167,6 +187,8 @@ router.post("/:id/vote", auth, async (req, res) => {
 
     const campaign = await Campaign.findById(req.params.id);
     if (!campaign) return res.status(404).send({ error: "Campaign not found" });
+    if (campaign.status === "finished") 
+      return res.status(400).send({ error: "Campaign has finished" });
 
     if (amountPaid < campaign.price)
       return res.status(400).send({ error: "Insufficient payment" });
@@ -189,11 +211,29 @@ router.post("/:id/vote", auth, async (req, res) => {
     campaign.participants.push({
       user: req.user._id,
       hasPaid: true,
+      amountPaid,
       vote: voteIndex,
     });
 
     await campaign.save();
     res.send({ message: "Vote recorded successfully" });
+  } catch (error) {
+    res.status(400).send({ error: error.message });
+  }
+});
+
+// TOGGLE STATUS
+router.patch("/:id/status", auth, async (req, res) => {
+  try {
+    const campaign = await Campaign.findById(req.params.id);
+    if (!campaign) return res.status(404).send({ error: "Campaign not found" });
+    if (!campaign.creator.equals(req.user._id))
+      return res.status(403).send({ error: "Unauthorized" });
+
+    campaign.status = campaign.status === "active" ? "finished" : "active";
+    await campaign.save();
+
+    res.send({ message: "Status updated", status: campaign.status });
   } catch (error) {
     res.status(400).send({ error: error.message });
   }

@@ -34,7 +34,7 @@ app.use("/uploads", express.static(path.join(__dirname, "uploads")));
 // Routes
 app.use('/users', require('./routes/users'));
 app.use('/campaigns', require('./routes/campaigns'));
-
+app.use('/nft-rewards', require('./routes/nftReward'));
 
 // Swagger docs
 app.use('/api-docs', swaggerUi.serve);

@@ -7,6 +7,11 @@ const campaignSchema = new mongoose.Schema(
     images: [{ type: String }],
     category: { type: String },
     price: { type: Number, required: true, min: 0.001 },
+    status: { 
+      type: String, 
+      enum: ["active", "finished"], 
+      default: "active" 
+    },
     creator: { type: mongoose.Schema.Types.ObjectId, ref: "User", required: true },
     options: [
       {
@@ -18,9 +23,12 @@ const campaignSchema = new mongoose.Schema(
       {
         user: { type: mongoose.Schema.Types.ObjectId, ref: "User" },
         hasPaid: { type: Boolean, default: false },
+        amountPaid: { type: Number, min: 0 },
         vote: { type: Number }, // pake index
       },
     ],
+    topParticipantImage: { type: String, required: false },
+    allParticipantsImage: { type: String, required: false },
   },
   { timestamps: true }
 );

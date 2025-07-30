@@ -13,6 +13,7 @@ import { client } from "@/app/client";
 import axios from "axios";
 import Image from "next/image";
 import toast from "react-hot-toast";
+import { getOwnedTokenIds } from "thirdweb/extensions/erc1155";
 
 interface NFTReward {
   _id: string;
@@ -44,11 +45,13 @@ function NFTCard({
   isWalletConnected,
   onClaim,
   claiming,
+  claimed,
 }: {
   nft: NFTReward & { metadata: NFTMetadata | null };
   isWalletConnected: boolean;
   onClaim: (tokenId: bigint) => Promise<void>;
   claiming: boolean;
+  claimed: boolean;
 }) {
   const [imgLoaded, setImgLoaded] = useState(false);
   const [imgError, setImgError] = useState(false);
@@ -102,7 +105,12 @@ function NFTCard({
               onError={(e) => {
                 setImgError(true);
                 setImgLoaded(true);
-                console.error("Failed to load NFT image at", usableImage, "event:", e);
+                console.error(
+                  "Failed to load NFT image at",
+                  usableImage,
+                  "event:",
+                  e
+                );
               }}
             />
           )}
@@ -133,10 +141,14 @@ function NFTCard({
         </div>
         <div className="mt-6 w-full flex flex-col items-center">
           {!isWalletConnected ? (
-            <ConnectButton
-              client={client}
-              chain={etherlinkTestnet}
-            />
+            <ConnectButton client={client} chain={etherlinkTestnet} />
+          ) : claimed ? (
+            <button
+              className="w-full bg-gray-500 text-white rounded-full px-6 py-2.5 font-semibold shadow-sm opacity-60 cursor-not-allowed"
+              disabled
+            >
+              Claimed
+            </button>
           ) : (
             <button
               className="w-full bg-gradient-to-r from-green-500 to-emerald-600 text-white rounded-full px-6 py-2.5 font-semibold shadow-sm hover:opacity-90 transition-all duration-200 disabled:opacity-50 disabled:cursor-not-allowed"
@@ -153,11 +165,13 @@ function NFTCard({
 }
 
 export default function NFTCollections() {
-  const [nfts, setNfts] = useState<(NFTReward & { metadata: NFTMetadata | null })[]>([]);
+  const [nfts, setNfts] = useState<
+    (NFTReward & { metadata: NFTMetadata | null })[]
+  >([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
   const [claimingToken, setClaimingToken] = useState<bigint | null>(null);
-
+  const [ownedTokenIds, setOwnedTokenIds] = useState<bigint[]>([]);
   // Get active wallet/account state from thirdweb
   const activeWallet = useActiveWallet();
   const account = useActiveAccount();
@@ -174,11 +188,14 @@ export default function NFTCollections() {
         }
 
         const user = JSON.parse(userData);
-        const response = await axios.get(`${BACKEND_URL}/nft-rewards/user/${user._id}`, {
-          headers: {
-            Authorization: `Bearer ${token}`,
-          },
-        });
+        const response = await axios.get(
+          `${BACKEND_URL}/nft-rewards/user/${user._id}`,
+          {
+            headers: {
+              Authorization: `Bearer ${token}`,
+            },
+          }
+        );
 
         // Get contract instance
         const contract = getContract({
@@ -198,7 +215,10 @@ export default function NFTCollections() {
               });
               return { ...nft, metadata };
             } catch (error: unknown) {
-              console.error(`Failed to fetch metadata for token ${tokenId}:`, error);
+              console.error(
+                `Failed to fetch metadata for token ${tokenId}:`,
+                error
+              );
               return { ...nft, metadata: null };
             }
           })
@@ -206,7 +226,8 @@ export default function NFTCollections() {
 
         setNfts(nftsWithMetadata);
       } catch (err: unknown) {
-        const errorMessage = err instanceof Error ? err.message : "Unknown error";
+        const errorMessage =
+          err instanceof Error ? err.message : "Unknown error";
         setError("Failed to fetch NFT collections: " + errorMessage);
         console.error("Fetch error:", err);
       } finally {
@@ -216,6 +237,30 @@ export default function NFTCollections() {
 
     fetchNFTs();
   }, []);
+
+  useEffect(() => {
+    const fetchOwned = async () => {
+      if (!account?.address) {
+        setOwnedTokenIds([]);
+        return;
+      }
+      const contract = getContract({
+        address: CONTRACT_ADDRESS,
+        chain: etherlinkTestnet,
+        client,
+      });
+      const owned = await getOwnedTokenIds({
+        contract,
+        address: account.address,
+        start: 0,
+        count: 100, // adjust as needed
+      });
+      setOwnedTokenIds(
+        owned.filter((o) => o.balance > 0n).map((o) => o.tokenId)
+      );
+    };
+    fetchOwned();
+  }, [account?.address]);
 
   // Handler for claiming an NFT
   async function handleClaim(tokenId: bigint) {
@@ -243,7 +288,9 @@ export default function NFTCollections() {
       toast.success("NFT claimed to your wallet!");
     } catch (error: any) {
       toast.error(
-        error?.message ? `Failed to claim NFT: ${error.message}` : "Failed to claim NFT"
+        error?.message
+          ? `Failed to claim NFT: ${error.message}`
+          : "Failed to claim NFT"
       );
     } finally {
       setClaimingToken(null);
@@ -274,7 +321,8 @@ export default function NFTCollections() {
         {!loading && !error && nfts.length === 0 && (
           <div className="text-center bg-[#1a1a1d] p-6 rounded-xl border border-white/10">
             <p className="text-gray-400 text-sm">
-              No NFTs found for your account. Start participating in campaigns to earn rewards!
+              No NFTs found for your account. Start participating in campaigns
+              to earn rewards!
             </p>
           </div>
         )}
@@ -287,6 +335,7 @@ export default function NFTCollections() {
               isWalletConnected={!!activeWallet}
               onClaim={handleClaim}
               claiming={claimingToken === BigInt(nft.tokenIds[0])}
+              claimed={ownedTokenIds.includes(BigInt(nft.tokenIds[0]))}
             />
           ))}
         </div>

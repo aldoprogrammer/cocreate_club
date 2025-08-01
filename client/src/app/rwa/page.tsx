@@ -1,6 +1,11 @@
 "use client";
 import React, { useState, useEffect } from "react";
-import { getContract, readContract } from "thirdweb";
+import {
+  getContract,
+  readContract,
+  prepareContractCall,
+  sendTransaction,
+} from "thirdweb";
 import {
   TransactionButton,
   ConnectButton,
@@ -11,8 +16,12 @@ import { client } from "@/app/client";
 import rwaImg from "@/assets/rwa.jpg";
 import Image from "next/image";
 import Navbar from "../components/Navbar";
+import toast from "react-hot-toast";
 
-const RWA_CONTRACT_ADDRESS = process.env.NEXT_PUBLIC_RWA_ALDO_ART!;
+const RWA_CONTRACT_ADDRESS =
+  process.env.NEXT_PUBLIC_RWA_ALDO_ART!;
+const MARKET_ADDRESS =
+  "0x000000000000000000000000000000000000dead"; // Replace with your own market/escrow address
 
 export default function RWAOverview() {
   const account = useActiveAccount();
@@ -29,6 +38,7 @@ export default function RWAOverview() {
   const [recipient, setRecipient] = useState("");
   const [priceUsd] = useState("0.001"); // Fixed price per item
   const [change24h, setChange24h] = useState("+0.12%");
+  const [loading, setLoading] = useState(false);
 
   useEffect(() => {
     async function fetchMetadata() {
@@ -55,11 +65,13 @@ export default function RWAOverview() {
       });
       const supply = await readContract({
         contract,
-        method: "function totalSupply() view returns (uint256)",
+        method:
+          "function totalSupply() view returns (uint256)",
         params: [],
       });
 
-      const totalSupplyFormatted = Number(supply) / 10 ** Number(decimals);
+      const totalSupplyFormatted =
+        Number(supply) / 10 ** Number(decimals);
 
       setMetadata({
         name,
@@ -87,10 +99,12 @@ export default function RWAOverview() {
       const decimals = metadata.decimals;
       const balance = await readContract({
         contract,
-        method: "function balanceOf(address) view returns (uint256)",
+        method:
+          "function balanceOf(address) view returns (uint256)",
         params: [account.address],
       });
-      const formatted = Number(balance) / 10 ** Number(decimals);
+      const formatted =
+        Number(balance) / 10 ** Number(decimals);
       setHolding(formatted.toLocaleString());
     }
     if (account && metadata.decimals) {
@@ -99,16 +113,104 @@ export default function RWAOverview() {
   }, [account, metadata.decimals]);
 
   // Calculate total cost based on amount and fixed price
-  const totalCost = (parseFloat(amount || "0") * parseFloat(priceUsd)).toFixed(
-    3
-  );
+  const totalCost = (
+    parseFloat(amount || "0") * parseFloat(priceUsd)
+  ).toFixed(3);
+
+  // --- BUY FUNCTION ---
+  const handleBuy = async () => {
+    if (!account) return toast.error("Connect your wallet.");
+    setLoading(true);
+    try {
+      const contract = await getContract({
+        address: RWA_CONTRACT_ADDRESS,
+        chain: etherlinkTestnet,
+        client,
+      });
+      // Mint to self
+      const decimals = metadata.decimals;
+      const mintAmount = BigInt(
+        Number(amount) * 10 ** Number(decimals),
+      );
+      const tx = await prepareContractCall({
+        contract,
+        method:
+          "function mintTo(address to, uint256 amount)",
+        params: [account.address, mintAmount],
+      });
+      const { transactionHash } = await sendTransaction({
+        transaction: tx,
+        account,
+      });
+      toast.success(`Buy Success! Tx: ${transactionHash}`);
+    } catch (err) {
+      toast.error("Buy failed: " + (err as any)?.message);
+    }
+    setLoading(false);
+  };
+
+  // --- SELL FUNCTION ---
+  const handleSell = async () => {
+    if (!account) return toast.error("Connect your wallet.");
+    setLoading(true);
+    try {
+      const contract = await getContract({
+        address: RWA_CONTRACT_ADDRESS,
+        chain: etherlinkTestnet,
+        client,
+      });
+      // Transfer to market/escrow address
+      const decimals = metadata.decimals;
+      const sellAmount = BigInt(
+        Number(amount) * 10 ** Number(decimals),
+      );
+      const tx = await prepareContractCall({
+        contract,
+        method:
+          "function transfer(address to, uint256 amount) returns (bool)",
+        params: [MARKET_ADDRESS, sellAmount],
+      });
+      const { transactionHash } = await sendTransaction({
+        transaction: tx,
+        account,
+      });
+      toast.success(`Sell Success! Tx: ${transactionHash}`);
+    } catch (err) {
+      toast.error("Sell failed: " + (err as any)?.message);
+    }
+    setLoading(false);
+  };
+
+  // --- SEND FUNCTION (for TransactionButton) ---
+  const sendTx = async () => {
+    if (!account) throw new Error("Connect your wallet.");
+    const contract = await getContract({
+      address: RWA_CONTRACT_ADDRESS,
+      chain: etherlinkTestnet,
+      client,
+    });
+    const decimals = metadata.decimals;
+    const sendAmount = BigInt(
+      Number(amount) * 10 ** Number(decimals),
+    );
+    const tx = await prepareContractCall({
+      contract,
+      method:
+        "function transfer(address to, uint256 amount) returns (bool)",
+      params: [recipient, sendAmount],
+    });
+    return tx;
+  };
 
   return (
     <div>
       <Navbar />
       <div className="p-6 mt-12 max-w-md mx-auto bg-gradient-to-br from-gray-900 via-gray-800 to-gray-900 rounded-2xl shadow-2xl border border-gray-700 transform hover:scale-105 transition-transform duration-300">
         <div className="flex justify-center mb-4">
-          <ConnectButton client={client} chain={etherlinkTestnet} />
+          <ConnectButton
+            client={client}
+            chain={etherlinkTestnet}
+          />
         </div>
         <div className="flex items-center space-x-4 mb-6">
           <div className="relative w-24 h-24 rounded-full overflow-hidden border-2 border-blue-500">
@@ -122,31 +224,49 @@ export default function RWAOverview() {
           <div>
             <h2 className="text-2xl font-bold text-white">
               {metadata.name}{" "}
-              <span className="text-blue-400">({metadata.symbol})</span>
+              <span className="text-blue-400">
+                ({metadata.symbol})
+              </span>
             </h2>
-            <p className="text-sm text-gray-400">{metadata.description}</p>
+            <p className="text-sm text-gray-400">
+              {metadata.description}
+            </p>
           </div>
         </div>
         <div className="grid grid-cols-2 gap-4 text-sm text-gray-300 mb-6">
           <div>
-            <span className="text-gray-500">Total Supply:</span>
-            <p className="font-semibold">{metadata.totalSupply}</p>
+            <span className="text-gray-500">
+              Total Supply:
+            </span>
+            <p className="font-semibold">
+              {metadata.totalSupply}
+            </p>
           </div>
           <div>
-            <span className="text-gray-500">Your Holding:</span>
+            <span className="text-gray-500">
+              Your Holding:
+            </span>
             <p className="font-semibold">
               {holding} {metadata.symbol}
             </p>
           </div>
           <div>
-            <span className="text-gray-500">Current Price:</span>
-            <p className="font-semibold text-green-400">XTZ {priceUsd}</p>
+            <span className="text-gray-500">
+              Current Price:
+            </span>
+            <p className="font-semibold text-green-400">
+              XTZ {priceUsd}
+            </p>
           </div>
           <div>
-            <span className="text-gray-500">24h Change:</span>
+            <span className="text-gray-500">
+              24h Change:
+            </span>
             <p
               className={
-                change24h.startsWith("+") ? "text-green-400" : "text-red-400"
+                change24h.startsWith("+")
+                  ? "text-green-400"
+                  : "text-red-400"
               }
             >
               {change24h}
@@ -176,34 +296,28 @@ export default function RWAOverview() {
             onChange={(e) => setRecipient(e.target.value)}
             className="w-full p-3 bg-gray-800 text-white border border-gray-600 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 transition"
           />
-        
           <div className="flex space-x-4">
-            <button className="flex-1 p-3 bg-green-600 text-white rounded-lg hover:bg-green-700 transition-colors font-semibold">
-              Buy
+            <button
+              className="flex-1 p-3 bg-green-600 text-white rounded-lg hover:bg-green-700 transition-colors font-semibold"
+              onClick={handleBuy}
+              disabled={loading}
+            >
+              {loading ? "Processing..." : "Buy"}
             </button>
-            <button className="flex-1 p-3 bg-red-600 text-white rounded-lg hover:bg-red-700 transition-colors font-semibold">
-              Sell
+            <button
+              className="flex-1 p-3 bg-red-600 text-white rounded-lg hover:bg-red-700 transition-colors font-semibold"
+              onClick={handleSell}
+              disabled={loading}
+            >
+              {loading ? "Processing..." : "Sell"}
             </button>
             <TransactionButton
-            transaction={async () => {
-              if (!account) throw new Error("Connect your wallet.");
-              const contract = await getContract({
-                address: RWA_CONTRACT_ADDRESS,
-                chain: etherlinkTestnet,
-                client,
-              });
-              const { transfer } = await import("thirdweb/extensions/erc20");
-              const tx = transfer({
-                contract,
-                to: recipient,
-                amount: amount,
-              });
-              return tx;
-            }}
-            className="w-full p-3 bg-blue-600 text-white rounded-lg hover:bg-blue-700 transition-colors font-semibold"
-          >
-            Send
-          </TransactionButton>
+              transaction={sendTx}
+              className="w-full p-3 bg-blue-600 text-white rounded-lg hover:bg-blue-700 transition-colors font-semibold"
+              disabled={loading}
+            >
+              Send
+            </TransactionButton>
           </div>
         </div>
       </div>

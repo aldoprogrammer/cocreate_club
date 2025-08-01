@@ -31,6 +31,7 @@ export default function Navbar() {
     { label: "Dashboard", href: "/dashboard" },
     { label: "Campaigns", href: "/campaigns" },
     { label: "Creators", href: "/creators" },
+    { label: "Real World Asset", href: "/rwa"}
   ];
 
   return (

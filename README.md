@@ -37,7 +37,7 @@ Voters / Audiences get **five chances to contribute** at least a **minimum XTZ a
 - **Frontend:** Next.js, React, TypeScript, Tailwind CSS  
 - **Blockchain:** Etherlink Testnet (Ghostnet), XTZ as native currency  
 - **Thirdweb:** Wallet integration, contract interactions, ERC-1155 NFT operations  
-- **Backend:** Node.js *(for campaign management and NFT reward storage)*  
+- **Backend:** Node.js, MongoDB, Swagger *(for campaign management and NFT reward storage)*  
 - **Dependencies:** Axios, react-hot-toast, lucide-react  
 
 ---
@@ -109,3 +109,7 @@ Simplifies voting, RWA trading, and NFT claiming with pre-configured logic.
 ### **NFT Collections**
 - View and claim **earned NFTs** at  
   `/components/audience/menus/NFTCollections.tsx`
+
+## License
+
+MIT

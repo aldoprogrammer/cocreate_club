@@ -54,7 +54,7 @@ Voters / Audiences get **five chances to contribute** at least a **minimum XTZ a
 - **RWA Marketplace**:  
   **Asset shares are tokenized as NFTs**, with **buy/sell/transfer functions** executed via **smart contracts**.
 
-**Configuration File:** `etherlinkChain.ts`
+**Configuration File:** `/lib/etherlinkChain.ts`
 
 ```ts
 Chain ID: 128123

@@ -60,3 +60,88 @@ Voters get **five chances to contribute** at least a **minimum XTZ amount**, wit
 Chain ID: 128123
 RPC: https://node.ghostnet.etherlink.com
 Explorer: https://testnet.explorer.etherlink.com
+```
+
+## How It Uses Thirdweb
+Thirdweb simplifies blockchain interactions:
+
+- **Wallet Connectivity:**
+ConnectButton & useActiveAccount for user authentication and signing transactions.
+
+- **Contract Interactions:**
+
+- **getContract** & **readContract** → fetch metadata (name, symbol, supply, balances)
+
+- **sendTransaction** → voting, NFT minting, and claim conditions
+
+- **ERC-1155 NFT Operations:**
+
+- **lazyMint** → create NFT badges for campaign rewards
+
+- **claimTo** → allow participants to claim NFTs
+
+- **getNFT** & getOwnedTokenIds → retrieve NFT metadata & ownership
+
+- **TransactionButton:**
+Simplifies voting, RWA trading, and NFT claiming with pre-configured logic.
+
+## Setup
+
+1. **Clone the Repository**
+```ts
+git clone https://github.com/aldoprogrammer/cocreate_club.git
+cd cocreate_club
+```
+
+**2. Install Dependencies**
+```ts
+npm install
+```
+
+**3. Configure Environment Variables**: Create a ```.env``` file in the ```client``` directory:
+
+```ts
+NEXT_PUBLIC_CONTRACT_ADDRESS=<your_contract_address>
+NEXT_PUBLIC_RWA_ALDO_ART=<aldo_art_contract_address>
+NEXT_PUBLIC_RWA_AMSL=<amsl_contract_address>
+NEXT_PUBLIC_RWA_MARKET_ADDRESS=<market_contract_address>
+NEXT_PUBLIC_BACKEND_URL=<your_backend_url>
+NEXT_PUBLIC_EXPLORER_PREFIX=https://testnet.explorer.etherlink.com/tx/
+NEXT_PUBLIC_CAMPAIGN_RECEIVER=<campaign_treasury_address>
+NEXT_PUBLIC_NATIVE_TOKEN_ADDRESS=<xtz_token_address>
+```
+
+**4. Run the Application**
+```npm run dev```
+
+**5. Access the App**
+Open ```http://localhost:3000``` in your browser.
+
+## Usage
+
+### **Creators**
+- Create campaigns via  
+  `/components/creators/menus/Campaign.tsx`
+- Set **vote options**, **minimum price**, and **upload NFT reward images**
+
+### **Voters**
+- Vote up to **5 times per campaign** at  
+  `/campaigns/[id]/page.tsx`
+- Pay **XTZ** to **influence outcomes** and **climb the leaderboard**
+
+### **Admins**
+- Deploy **NFT badges for top spenders** at  
+  `/components/admin/menus/DeployNFTasBadge.tsx`
+- Manage **reward distribution**
+
+### **RWA Marketplace**
+- Buy, sell, or trade **asset shares as NFTs** at  
+  `/app/rwa/page.tsx`
+
+### **NFT Collections**
+- View and claim **earned NFTs** at  
+  `/components/audience/menus/NFTCollections.tsx`
+
+## License
+
+MIT

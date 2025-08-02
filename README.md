@@ -92,7 +92,7 @@ Simplifies voting, RWA trading, and NFT claiming with pre-configured logic.
   `/components/creators/menus/Campaign.tsx`
 - Set **vote options**, **minimum price**, and **upload NFT reward images**
 
-### **Voters / Audiences / Audiences**
+### **Voters / Audiences**
 - Vote up to **5 times per campaign** at  
   `/campaigns/[id]/page.tsx`
 - Pay **XTZ** to **influence outcomes** and **climb the leaderboard**
@@ -109,7 +109,3 @@ Simplifies voting, RWA trading, and NFT claiming with pre-configured logic.
 ### **NFT Collections**
 - View and claim **earned NFTs** at  
   `/components/audience/menus/NFTCollections.tsx`
-
-## License
-
-MIT

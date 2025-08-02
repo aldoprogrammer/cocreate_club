@@ -63,27 +63,23 @@ Explorer: https://testnet.explorer.etherlink.com
 ```
 
 ## How It Uses Thirdweb
+
 Thirdweb simplifies blockchain interactions:
 
-- **Wallet Connectivity:**
-ConnectButton & useActiveAccount for user authentication and signing transactions.
+### **Wallet Connectivity**
+- `ConnectButton` & `useActiveAccount` → Enable seamless **user authentication** and **transaction signing**
 
-- **Contract Interactions:**
+### **Contract Interactions**
+- `getContract` & `readContract` → Fetch **metadata** (name, symbol, supply, balances)
+- `sendTransaction` → Handles **voting**, **NFT minting**, and **claim conditions**
 
-- **getContract** & **readContract** → fetch metadata (name, symbol, supply, balances)
+### **ERC-1155 NFT Operations**
+- `lazyMint` → Create **NFT badges** for campaign rewards
+- `claimTo` → Allow **participants to claim NFTs**
+- `getNFT` & `getOwnedTokenIds` → Retrieve **NFT metadata** & **ownership details**
 
-- **sendTransaction** → voting, NFT minting, and claim conditions
-
-- **ERC-1155 NFT Operations:**
-
-- **lazyMint** → create NFT badges for campaign rewards
-
-- **claimTo** → allow participants to claim NFTs
-
-- **getNFT** & getOwnedTokenIds → retrieve NFT metadata & ownership
-
-- **TransactionButton:**
-Simplifies voting, RWA trading, and NFT claiming with pre-configured logic.
+### **TransactionButton**
+- Simplifies **voting**, **RWA trading**, and **NFT claiming** with **pre-configured logic**
 
 ## Usage
 

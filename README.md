@@ -85,38 +85,6 @@ ConnectButton & useActiveAccount for user authentication and signing transaction
 - **TransactionButton:**
 Simplifies voting, RWA trading, and NFT claiming with pre-configured logic.
 
-## Setup
-
-1. **Clone the Repository**
-```ts
-git clone https://github.com/aldoprogrammer/cocreate_club.git
-cd cocreate_club
-```
-
-**2. Install Dependencies**
-```ts
-npm install
-```
-
-**3. Configure Environment Variables**: Create a ```.env``` file in the ```client``` directory:
-
-```ts
-NEXT_PUBLIC_CONTRACT_ADDRESS=<your_contract_address>
-NEXT_PUBLIC_RWA_ALDO_ART=<aldo_art_contract_address>
-NEXT_PUBLIC_RWA_AMSL=<amsl_contract_address>
-NEXT_PUBLIC_RWA_MARKET_ADDRESS=<market_contract_address>
-NEXT_PUBLIC_BACKEND_URL=<your_backend_url>
-NEXT_PUBLIC_EXPLORER_PREFIX=https://testnet.explorer.etherlink.com/tx/
-NEXT_PUBLIC_CAMPAIGN_RECEIVER=<campaign_treasury_address>
-NEXT_PUBLIC_NATIVE_TOKEN_ADDRESS=<xtz_token_address>
-```
-
-**4. Run the Application**
-```npm run dev```
-
-**5. Access the App**
-Open ```http://localhost:3000``` in your browser.
-
 ## Usage
 
 ### **Creators**

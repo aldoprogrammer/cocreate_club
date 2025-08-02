@@ -2,7 +2,7 @@
 
 **CoCreate Club** is a **gamified voting platform** on the **Etherlink Testnet (Ghostnet)** where votes carry weight based on **XTZ contributions**. The **option with the highest total XTZ wins**, not the most votes.  
 
-Voters get **five chances to contribute** at least a **minimum XTZ amount**, with **higher contributions boosting leaderboard rankings**.  
+Voters / Audiences get **five chances to contribute** at least a **minimum XTZ amount**, with **higher contributions boosting leaderboard rankings**.  
 
 - The **top spender** in each campaign earns an **exclusive NFT** from the creator.  
 - **All participants** receive a **reward NFT**.  
@@ -92,7 +92,7 @@ Simplifies voting, RWA trading, and NFT claiming with pre-configured logic.
   `/components/creators/menus/Campaign.tsx`
 - Set **vote options**, **minimum price**, and **upload NFT reward images**
 
-### **Voters**
+### **Voters / Audiences / Audiences**
 - Vote up to **5 times per campaign** at  
   `/campaigns/[id]/page.tsx`
 - Pay **XTZ** to **influence outcomes** and **climb the leaderboard**

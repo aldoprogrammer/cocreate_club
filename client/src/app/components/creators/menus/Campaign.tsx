@@ -370,7 +370,7 @@ export default function Campaign() {
           </div>
           <div>
             <label className="block text-sm font-medium text-gray-400">
-              Top Participant Image (Optional)
+              Top Participant NFT Image (Required)
             </label>
             <input
               type="file"
@@ -382,7 +382,7 @@ export default function Campaign() {
           </div>
           <div>
             <label className="block text-sm font-medium text-gray-400">
-              All Participants Image (Optional)
+              All Participants NFT Image (Required)
             </label>
             <input
               type="file"

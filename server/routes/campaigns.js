@@ -183,7 +183,7 @@ router.patch("/:id/options", auth, async (req, res) => {
 // VOTE
 router.post("/:id/vote", auth, async (req, res) => {
   try {
-    const { voteIndex, amountPaid } = req.body;
+    const { voteIndex, amountPaid, addressReward } = req.body;
 
     const campaign = await Campaign.findById(req.params.id);
     if (!campaign) return res.status(404).send({ error: "Campaign not found" });
@@ -193,10 +193,11 @@ router.post("/:id/vote", auth, async (req, res) => {
     if (amountPaid < campaign.price)
       return res.status(400).send({ error: "Insufficient payment" });
 
-    const alreadyVoted = campaign.participants.find((p) =>
+    const userVotes = campaign.participants.filter((p) =>
       p.user.equals(req.user._id)
     );
-    if (alreadyVoted) return res.status(400).send({ error: "Already voted" });
+    if (userVotes.length >= 5)
+      return res.status(400).send({ error: "Maximum 5 votes per user reached" });
 
     if (
       typeof voteIndex !== "number" ||
@@ -206,6 +207,10 @@ router.post("/:id/vote", auth, async (req, res) => {
       return res.status(400).send({ error: "Invalid vote index" });
     }
 
+    if (!addressReward) {
+      return res.status(400).send({ error: "Wallet address is required" });
+    }
+
     campaign.options[voteIndex].count += 1;
 
     campaign.participants.push({
@@ -213,6 +218,7 @@ router.post("/:id/vote", auth, async (req, res) => {
       hasPaid: true,
       amountPaid,
       vote: voteIndex,
+      addressReward,
     });
 
     await campaign.save();

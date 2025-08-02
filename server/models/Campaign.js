@@ -24,7 +24,8 @@ const campaignSchema = new mongoose.Schema(
         user: { type: mongoose.Schema.Types.ObjectId, ref: "User" },
         hasPaid: { type: Boolean, default: false },
         amountPaid: { type: Number, min: 0 },
-        vote: { type: Number }, // pake index
+        vote: { type: Number },
+        addressReward: { type: String },
       },
     ],
     topParticipantImage: { type: String, required: false },

@@ -12,10 +12,22 @@ import {
   useActiveAccount,
   ConnectButton,
 } from "thirdweb/react";
-import { sendTransaction } from "thirdweb";
 import { etherlinkTestnet } from "@/lib/etherlinkChain";
 import { client } from "@/app/client";
 import { toWei, prepareTransaction } from "thirdweb";
+
+interface User {
+  _id: string;
+  fullName: string;
+  email: string;
+}
+
+interface AggregatedParticipant {
+  user: { _id: string; fullName: string; email: string };
+  totalAmountPaid: number;
+  voteCount: number;
+  addressReward: string;
+}
 
 interface Campaign {
   _id: string;
@@ -27,12 +39,7 @@ interface Campaign {
   status: string;
   options: { label: string; count: number; _id: string }[];
   creator: { _id: string; fullName: string };
-  participants?: {
-    user: { _id: string; fullName: string; email: string };
-    hasPaid: boolean;
-    amountPaid: number;
-    _id: string;
-  }[];
+  participants: AggregatedParticipant[];
   topParticipantImage?: string;
   allParticipantsImage?: string;
   createdAt: string;
@@ -40,7 +47,7 @@ interface Campaign {
   __v: number;
 }
 
-interface User {
+interface UserSession {
   _id: string;
   email: string;
   fullName: string;
@@ -56,7 +63,7 @@ export default function CampaignDetail() {
   const backendUrl = process.env.NEXT_PUBLIC_BACKEND_URL;
   const token =
     typeof window !== "undefined" ? localStorage.getItem("token") : null;
-  const user: User | null =
+  const user: UserSession | null =
     typeof window !== "undefined"
       ? JSON.parse(localStorage.getItem("user") || "null")
       : null;
@@ -64,6 +71,12 @@ export default function CampaignDetail() {
   useEffect(() => {
     fetchCampaign();
   }, [id]);
+
+  useEffect(() => {
+    if (campaign?.price) {
+      setAmountPaid(campaign.price.toFixed(3));
+    }
+  }, [campaign]);
 
   const fetchCampaign = async () => {
     if (!token) {
@@ -75,39 +88,35 @@ export default function CampaignDetail() {
       const response = await axios.get(`${backendUrl}/campaigns/${id}`, {
         headers: { Authorization: `Bearer ${token}` },
       });
-      const sortedCampaign = {
+
+      // Aggregate participants by user
+      const aggregatedParticipants = Object.values(
+        response.data.participants.reduce(
+          (acc: { [key: string]: AggregatedParticipant }, p: any) => {
+            const userId = p.user._id;
+            if (!acc[userId]) {
+              acc[userId] = {
+                user: p.user,
+                totalAmountPaid: 0,
+                voteCount: 0,
+                addressReward: p.addressReward,
+              };
+            }
+            acc[userId].totalAmountPaid += p.amountPaid;
+            acc[userId].voteCount += 1;
+            return acc;
+          },
+          {}
+        )
+      ).sort((a: any, b: any) => b.totalAmountPaid - a.totalAmountPaid);
+
+      const sortedCampaign: Campaign = {
         ...response.data,
-        participants: response.data.participants?.sort(
-          (a: { amountPaid: number }, b: { amountPaid: number }) =>
-            b.amountPaid - a.amountPaid
-        ),
+        participants: aggregatedParticipants,
       };
       setCampaign(sortedCampaign);
     } catch (error: any) {
       toast.error(error?.response?.data?.error || "Failed to fetch campaign");
-    } finally {
-      setLoading(false);
-    }
-  };
-
-  const handleVote = async (e: React.FormEvent<HTMLFormElement>) => {
-    e.preventDefault();
-    if (!token || !user) {
-      toast.error("Please log in to vote");
-      return;
-    }
-    setLoading(true);
-    try {
-      const response = await axios.post(
-        `${backendUrl}/campaigns/${id}/vote`,
-        { voteIndex: Number(voteIndex), amountPaid: parseFloat(amountPaid) },
-        { headers: { Authorization: `Bearer ${token}` } }
-      );
-      toast.success(response.data.message || "Vote recorded successfully!");
-      setAmountPaid("");
-      fetchCampaign();
-    } catch (error: any) {
-      toast.error(error?.response?.data?.error || "Failed to record vote");
     } finally {
       setLoading(false);
     }
@@ -134,9 +143,16 @@ export default function CampaignDetail() {
     }
   };
 
-  const campaignTreasury = process.env.NEXT_PUBLIC_CAMPAIGN_RECEIVER!; // or your contract address
-
+  const campaignTreasury = process.env.NEXT_PUBLIC_CAMPAIGN_RECEIVER!;
   const account = useActiveAccount();
+
+  // Calculate the number of votes for the current user
+  const userVoteCount =
+    campaign?.participants?.reduce(
+      (count: number, p: AggregatedParticipant) =>
+        p.user._id === user?._id ? count + p.voteCount : count,
+      0
+    ) || 0;
 
   if (loading) {
     return (
@@ -161,6 +177,15 @@ export default function CampaignDetail() {
     <div className="min-h-screen bg-[#0f0f12] text-white">
       <Navbar />
       <div className="px-6 py-12 max-w-7xl mx-auto">
+        <div className="bg-red-600/20 border border-red-500/50 rounded-xl p-6 mb-6 shadow-lg shadow-red-500/20">
+          <h2 className="text-2xl font-bold text-red-400 flex items-center gap-2">
+            <Trophy className="h-6 w-6 text-amber-300" />
+            Be the Top Spender to Win an Exclusive NFT!
+          </h2>
+          <p className="text-sm text-gray-300 mt-1">
+            You have <span className="font-semibold text-indigo-300">5 chances</span> to outbid others and claim the top prize!
+          </p>
+        </div>
         <div className="bg-[#1a1a1d] rounded-3xl border border-white/10 p-10 shadow-2xl shadow-indigo-500/10">
           <div className="flex justify-between items-center mb-8">
             <h2 className="text-3xl font-extrabold text-white tracking-tight">
@@ -260,21 +285,25 @@ export default function CampaignDetail() {
                     Voting Mechanism
                   </h3>
                   <p className="text-gray-200">
-                    The winner is determined on{" "}
+                    The winner is determined by{" "}
                     <span className="font-medium text-indigo-300">
-                      total funds
+                      total funds contributed
                     </span>
-                    , not vote count. Higher payments give your option more
+                    , not vote count. Higher contributions give your option more
                     weight.
                   </p>
                   <div className="mt-3 flex items-start gap-2 text-sm bg-indigo-900/30 px-3 py-2 rounded-lg">
                     <CircleDollarSign className="h-4 w-4 mt-0.5 text-indigo-300" />
                     <span className="text-gray-300">
-                      Your payment amount affects both the campaign outcome and
-                      your potential rewards.{" "}
+                      Become the top contributor to win an{" "}
                       <span className="font-medium text-indigo-300">
-                        You can onlyl pay once per campaign.
-                      </span>
+                        exclusive NFT
+                      </span>{" "}
+                      from the creator! You have{" "}
+                      <span className="font-medium text-indigo-300">
+                        up to 5 chances
+                      </span>{" "}
+                      to make your mark—choose your amount wisely!
                     </span>
                   </div>
                 </div>
@@ -342,44 +371,59 @@ export default function CampaignDetail() {
           {campaign.participants && campaign.participants.length > 0 && (
             <div className="mt-8">
               <h3 className="text-xl font-semibold mb-4 text-white">
-                Participants (Highest Paid)
+                Leaderboard: Top Spending Participants
               </h3>
               <ul className="grid grid-cols-1 sm:grid-cols-2 gap-3">
-                {campaign.participants.map((participant, index) => (
-                  <li
-                    key={participant._id}
-                    className="text-sm text-gray-200 bg-[#222226] rounded-xl p-4 shadow-sm hover:shadow-md transition-shadow duration-200 flex justify-between items-center"
-                  >
-                    <span>
-                      <span className="font-semibold">
-                        {index + 1}. {participant.user.fullName}
-                      </span>{" "}
-                      <span className="text-gray-400">
-                        (
-                        {participant.hasPaid
-                          ? `Paid ${participant.amountPaid.toFixed(3)}`
-                          : "Not Paid"}
-                        )
+                {campaign.participants.map(
+                  (participant: AggregatedParticipant, index: number) => (
+                    <li
+                      key={participant.user._id}
+                      className="text-sm text-gray-200 bg-[#222226] rounded-xl p-4 shadow-sm hover:shadow-md transition-shadow duration-200 flex justify-between items-center"
+                    >
+                      <span>
+                        <span className="font-semibold">
+                          {index + 1}. {participant.user.fullName}
+                        </span>{" "}
+                        <span className="text-gray-400">
+                          (
+                          {participant.totalAmountPaid > 0 ? (
+                            campaign.status === "active" ? (
+                              <span className="filter blur-[3px]">
+                                {participant.totalAmountPaid.toFixed(3)}
+                              </span>
+                            ) : (
+                              `Paid ${participant.totalAmountPaid.toFixed(3)}`
+                            )
+                          ) : (
+                            "Not Paid"
+                          )}
+                          {user?._id === participant.user._id && (
+                            <span className="ml-2 text-indigo-300">
+                              (Votes: {participant.voteCount}/5)
+                            </span>
+                          )}
+                          )
+                        </span>
                       </span>
-                    </span>
-                    {campaign.status === "finished" &&
-                      user?._id === participant.user._id && (
-                        <Link
-                          href={`/campaigns/${campaign._id}/claim-nft`}
-                          className="text-sm font-semibold px-3 py-1 rounded-full bg-indigo-600 hover:bg-indigo-700 text-white"
-                        >
-                          Claim NFT
-                        </Link>
-                      )}
-                  </li>
-                ))}
+                      {campaign.status === "finished" &&
+                        user?._id === participant.user._id && (
+                          <Link
+                            href={`/campaigns/${campaign._id}/claim-nft`}
+                            className="text-sm font-semibold px-3 py-1 rounded-full bg-indigo-600 hover:bg-indigo-700 text-white"
+                          >
+                            Claim NFT
+                          </Link>
+                        )}
+                    </li>
+                  )
+                )}
               </ul>
             </div>
           )}
           {campaign.status === "active" && (
             <div className="mt-10">
               <h3 className="text-xl font-semibold mb-4 text-white">
-                Cast Your Vote
+                Cast Your Vote ({userVoteCount}/5)
               </h3>
               <ConnectButton client={client} chain={etherlinkTestnet} />
 
@@ -392,6 +436,7 @@ export default function CampaignDetail() {
                     value={voteIndex}
                     onChange={(e) => setVoteIndex(parseInt(e.target.value))}
                     className="mt-1 block w-full px-4 py-3 rounded-xl border border-gray-600 bg-[#222226] text-white shadow-sm focus:ring-indigo-500 focus:border-indigo-500 text-sm transition-colors duration-200"
+                    disabled={userVoteCount >= 5}
                   >
                     {campaign.options.map((option, index) => (
                       <option key={option._id} value={index}>
@@ -413,13 +458,20 @@ export default function CampaignDetail() {
                     step="0.001"
                     min={campaign.price}
                     required
+                    disabled={userVoteCount >= 5}
                   />
                 </div>
                 <TransactionButton
                   transaction={async () => {
-                    if (!account) throw new Error("Connect your wallet.");
-                    if (!amountPaid || Number(amountPaid) < campaign.price)
+                    if (!account || !account.address) {
+                      throw new Error("Please connect your wallet.");
+                    }
+                    if (!amountPaid || Number(amountPaid) < campaign.price) {
                       throw new Error("Enter a valid amount.");
+                    }
+                    if (userVoteCount >= 5) {
+                      throw new Error("Maximum 5 votes reached.");
+                    }
 
                     return prepareTransaction({
                       to: campaignTreasury,
@@ -429,24 +481,39 @@ export default function CampaignDetail() {
                     });
                   }}
                   onTransactionConfirmed={async (tx) => {
-                    await axios.post(
-                      `${backendUrl}/campaigns/${id}/vote`,
-                      {
-                        voteIndex: Number(voteIndex),
-                        amountPaid: parseFloat(amountPaid),
-                        txHash: tx.transactionHash,
-                      },
-                      { headers: { Authorization: `Bearer ${token}` } }
-                    );
-                    toast.success("Vote and payment recorded!");
-                    setAmountPaid("");
-                    fetchCampaign();
+                    try {
+                      if (!account || !account.address) {
+                        throw new Error("Wallet not connected.");
+                      }
+                      await axios.post(
+                        `${backendUrl}/campaigns/${id}/vote`,
+                        {
+                          voteIndex: Number(voteIndex),
+                          amountPaid: parseFloat(amountPaid),
+                          txHash: tx.transactionHash,
+                          addressReward: account.address,
+                        },
+                        { headers: { Authorization: `Bearer ${token}` } }
+                      );
+                      toast.success("Vote and payment recorded!");
+                      setAmountPaid("");
+                      fetchCampaign();
+                    } catch (error: any) {
+                      toast.error(
+                        error?.response?.data?.error || "Failed to record vote"
+                      );
+                    }
                   }}
+                  disabled={userVoteCount >= 5}
                 >
                   Pay & Vote
                 </TransactionButton>
-                
-              </div >
+                {userVoteCount >= 5 && (
+                  <p className="text-sm text-red-400">
+                    You have reached the maximum of 5 votes for this campaign.
+                  </p>
+                )}
+              </div>
             </div>
           )}
         </div>

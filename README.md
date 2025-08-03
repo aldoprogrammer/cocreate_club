@@ -124,6 +124,26 @@ Thirdweb powers all blockchain interactions for **voting**, **NFT rewards**, and
 ### **Blockchain Config**
 - Update or view **Etherlink chain settings** at `/lib/etherlinkChain.ts`
 
+## Contract Addresses (Testnet)
+
+The following **testnet contract addresses** are used in this project and can be checked on the Etherlink Testnet Explorer:
+
+- **Main Campaign Contract / Exclusive NFT & All Participants NFT rewards:**  
+  [`0x98A5dA6DA640426A30eD85d7e4B101872F5d8827`](https://testnet.explorer.etherlink.com/address/0x98A5dA6DA640426A30eD85d7e4B101872F5d8827)
+
+- **Campaign Receiver (Treasury):**  
+  [`0xb7E9430eF91a97C54b988a27750Fdbb29173490F`](https://testnet.explorer.etherlink.com/address/0xb7E9430eF91a97C54b988a27750Fdbb29173490F)
+
+- **RWA Aldo Art:**  
+  [`0xa594d58761EE8Dda20f91F66Bc769c22d07A8f0b`](https://testnet.explorer.etherlink.com/address/0xa594d58761EE8Dda20f91F66Bc769c22d07A8f0b)
+
+- **RWA AMSL:**  
+  [`0xA7b200e05A48892a26797946350d12cCb7b08133`](https://testnet.explorer.etherlink.com/address/0xA7b200e05A48892a26797946350d12cCb7b08133)
+
+- **RWA Marketplace:**  
+  [`0x9108DDA1b1a5C1594fdade40862Fd84745542e5D`](https://testnet.explorer.etherlink.com/address/0x9108DDA1b1a5C1594fdade40862Fd84745542e5D)
+
+
 ## License
 
 MIT

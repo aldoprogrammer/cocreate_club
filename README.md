@@ -6,9 +6,7 @@ On this platform, **you can co-creation content by voting, compete to be the mos
 
 Voters / Audiences get **five chances to contribute** at least a **minimum XTZ amount**, with **higher contributions boosting leaderboard rankings**.  
 
-- The **top spender** in each campaign earns an **exclusive NFT** from the creator.  
-- **All participants** receive a **reward NFT**.  
-- The platform also features an **RWA (Real-World Asset) Marketplace** for **co-owning creator assets** (e.g., **art, music royalties**) as **tradable NFTs**.  
+All participants in a campaing also receive the NFT reward.
 
 **Themed campaigns** like **The Battle of Meme Kings** make community participation **engaging, rewarding, and viral**.
 

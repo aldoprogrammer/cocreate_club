@@ -18,23 +18,25 @@ All participants in a campaing also receive the NFT reward.
 
 ## Features
 
-- **Gamified Voting**:  
-  Pay-to-vote system where **total XTZ determines the winner**  
-  *(e.g., 1 vote of 0.009 XTZ beats 5 votes totaling 0.005 XTZ)*.
+- **Gamified Voting & Collaborative Content Creation**:  
+  - Every **vote influences content direction** and **supports creators**  
+  - **Total XTZ spent determines the winning option**, not the number of votes  
+  - *(e.g., 1 vote of 0.009 XTZ beats 5 votes totaling 0.005 XTZ)*  
 
-- **Leaderboard & Rewards**:  
-  Top spender wins an **exclusive NFT**; all participants receive a **reward NFT**.
+- **Leaderboard & NFT Rewards**:  
+  - **Top spender** in each campaign wins an **exclusive NFT**  
+  - **All participants** receive a **reward NFT** (airdrop for general participants, claim for top spender)
 
 - **RWA Marketplace**:  
-  Buy, sell, or trade **shares of creator assets** as **NFTs**.
+  - **Tokenized real-world assets (RWA)** as **ERC-20 and ERC-1155 NFTs**  
+  - Enables **fractional ownership** and **liquidity trading** for assets like **art or music royalties**  
 
 - **Etherlink Integration**:  
-  Built on **Etherlink Testnet** for **fast, low-cost transactions**.
+  - Built on **Etherlink Testnet (Ghostnet)** for **fast, low-cost transactions**  
 
 - **Thirdweb Integration**:  
-  Handles **wallet connectivity, contract interactions, and NFT minting/claiming**.
-
----
+  - Manages **wallet connectivity, NFT minting/claiming, and RWA tokenization**  
+  - Supports **ERC-1155** for campaign NFTs and **ERC-20** for RWA liquidity
 
 ## Tech Stack
 

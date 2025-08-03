@@ -53,8 +53,11 @@ Voters / Audiences get **five chances to contribute** at least a **minimum XTZ a
 - **NFT Minting & Trading**:  
   **Top spender and participant NFTs** are minted **on-chain** with **low fees**.
 
-- **RWA Marketplace**:  
-  **Asset shares are tokenized as NFTs**, with **buy/sell/transfer functions** executed via **smart contracts**.
+
+- **RWA Marketplace**  
+  - **Asset shares tokenized as NFTs** for co-ownership  
+  - **ERC-20 tokens for RWAs** provide **fractional ownership** and **better liquidity**  
+  - **Buy/sell/transfer functions** executed via **smart contracts**
 
 **Configuration File:** `/lib/etherlinkChain.ts`
 
@@ -107,6 +110,9 @@ Thirdweb simplifies blockchain interactions:
 ### **NFT Collections**
 - View and claim **earned NFTs** at  
   `/components/audience/menus/NFTCollections.tsx`
+
+### **Blockchain Config**
+- Update or view **Etherlink chain settings** at `/lib/etherlinkChain.ts`  
 
 ## License
 

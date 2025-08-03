@@ -71,22 +71,27 @@ Explorer: https://testnet.explorer.etherlink.com
 
 ## How It Uses Thirdweb
 
-Thirdweb simplifies blockchain interactions:
+Thirdweb powers all blockchain interactions for **voting**, **NFT rewards**, and **RWA tokenization**.
 
 ### **Wallet Connectivity**
 - `ConnectButton` & `useActiveAccount` → Enable seamless **user authentication** and **transaction signing**
 
 ### **Contract Interactions**
 - `getContract` & `readContract` → Fetch **metadata** (name, symbol, supply, balances)
-- `sendTransaction` → Handles **voting**, **NFT minting**, and **claim conditions**
+- `sendTransaction` → Handle **voting transactions**, **NFT minting**, **ERC-20 transfers**, and **claim conditions**
 
-### **ERC-1155 NFT Operations**
-- `lazyMint` → Create **NFT badges** for campaign rewards
-- `claimTo` → Allow **participants to claim NFTs**
+### **ERC-1155 NFT Operations** *(Campaign Rewards)*
+- `lazyMint` → Mint **NFT badges** for campaigns (exclusive for top spenders or for all participants)  
+- `claimTo` → Allow **participants to claim their earned campaign NFTs**  
 - `getNFT` & `getOwnedTokenIds` → Retrieve **NFT metadata** & **ownership details**
 
+### **ERC-20 Token Operations** *(RWA Tokenization & Liquidity)*
+- Used to **tokenize real-world assets (RWA)** for **fractional ownership**  
+- Enables **buying, selling, and trading** RWA tokens with **better liquidity** on-chain  
+- Integrated with Thirdweb for **transfer, approval, and marketplace operations**
+
 ### **TransactionButton**
-- Simplifies **voting**, **RWA trading**, and **NFT claiming** with **pre-configured logic**
+- Simplifies **voting**, **RWA ERC-20 trading**, and **NFT claiming** with **pre-configured logic**
 
 ## Usage
 
@@ -110,11 +115,12 @@ Thirdweb simplifies blockchain interactions:
   `/app/rwa/page.tsx`
 
 ### **NFT Collections**
-- View and claim **earned NFTs** at  
+- **Top spender** can **claim their exclusive NFT** via  
   `/components/audience/menus/NFTCollections.tsx`
+- **All participants** will **receive reward NFTs via airdrop** handled through the **Thirdweb dashboard**
 
 ### **Blockchain Config**
-- Update or view **Etherlink chain settings** at `/lib/etherlinkChain.ts`  
+- Update or view **Etherlink chain settings** at `/lib/etherlinkChain.ts`
 
 ## License
 

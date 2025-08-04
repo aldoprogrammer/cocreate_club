@@ -22,16 +22,32 @@ All participants in a campaing also receive the NFT reward.
 - **Gamified Voting & Collaborative Content Creation**:  
   - Every **vote influences content direction** and **supports creators**  
   - **Total XTZ spent determines the winning option**, not the number of votes  
-  - *(e.g., 1 vote of 0.009 XTZ beats 5 votes totaling 0.005 XTZ)*  
+  - *(e.g., 1 vote of 0.009 XTZ beats 5 votes totaling 0.005 XTZ)* 
+
 ![co create club voting](image-1.png)
-- **Leaderboard & NFT Rewards**:  
-  - **Top spender** in each campaign wins an **exclusive NFT**  
-  - **All participants** receive a **reward NFT** (airdrop for general participants, claim for top spender)
+
+- **Live Leaderboard Spender**:  
+  - Every participants will be listed here  
+  - **Pay more** to climb your rank to **win the exlusive NFT reward**
+
 ![Leaderboard spender in a campaign](image-2.png)
+
+- **Exclusive NFT Rewards ERC-1155**:
+  - **Top spender** in each campaign wins an **exclusive NFT**  
+
+![NFT Collections](image-4.png)
+
+- **All Participants NFT Rewards ERC-1155 NFTs**:
+  - **All participants** receive a **reward NFT** (airdrop for general participants, claim for top spender)
+
+![All Participants NFT Rewards ERC-1155 NFTs](image-5.png)
+
 - **RWA Marketplace**:  
-  - **Tokenized real-world assets (RWA)** as **ERC-20 and ERC-1155 NFTs**  
+  - **Tokenized real-world assets (RWA)** as **ERC-20**  
   - Enables **fractional ownership** and **liquidity trading** for assets like **art or music royalties**  
+
 ![RWA](image-3.png)
+
 - **Etherlink Integration**:  
   - Built on **Etherlink Testnet (Ghostnet)** for **fast, low-cost transactions**  
 
@@ -121,7 +137,7 @@ Thirdweb powers all blockchain interactions for **voting**, **NFT rewards**, and
 - **Top spender** can **claim their exclusive NFT** via  
   `/components/audience/menus/NFTCollections.tsx`
 - **All participants** will **receive reward NFTs via airdrop** handled through the **Thirdweb dashboard**
-![NFT Collections](image-4.png)
+
 ### **Blockchain Config**
 - Update or view **Etherlink chain settings** at `/lib/etherlinkChain.ts`
 

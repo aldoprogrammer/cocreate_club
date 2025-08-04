@@ -3,7 +3,7 @@
 **CoCreate Club** is a **gamified voting platform** on the **Etherlink Testnet (Ghostnet)** where votes carry weight based on **XTZ contributions**. The **option with the highest total XTZ wins**, not the most votes.  
 
 On this platform, **you can:**  
-- **Co-create content** by voting on creator's campaign to help them deciding the content direction 
+- **Co-create content** by voting to **help them deciding the content direction**
 - **Compete to be the top spender** in a campaign to **win an exclusive NFT from the creator**  
 - **Support creators** through **real-world asset ownership**
 

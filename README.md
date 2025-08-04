@@ -7,6 +7,7 @@ On this platform, **you can:**
 - **Compete to be the top spender** in a campaign to **win an exclusive NFT from the creator**  
 - **Support creators** through **real-world asset ownership**
 
+![co create img](image.png)
 
 Voters / Audiences get **five chances to contribute** at least a **minimum XTZ amount**, with **higher contributions boosting leaderboard rankings**.  
 
@@ -22,15 +23,15 @@ All participants in a campaing also receive the NFT reward.
   - Every **vote influences content direction** and **supports creators**  
   - **Total XTZ spent determines the winning option**, not the number of votes  
   - *(e.g., 1 vote of 0.009 XTZ beats 5 votes totaling 0.005 XTZ)*  
-
+![co create club voting](image-1.png)
 - **Leaderboard & NFT Rewards**:  
   - **Top spender** in each campaign wins an **exclusive NFT**  
   - **All participants** receive a **reward NFT** (airdrop for general participants, claim for top spender)
-
+![Leaderboard spender in a campaign](image-2.png)
 - **RWA Marketplace**:  
   - **Tokenized real-world assets (RWA)** as **ERC-20 and ERC-1155 NFTs**  
   - Enables **fractional ownership** and **liquidity trading** for assets like **art or music royalties**  
-
+![RWA](image-3.png)
 - **Etherlink Integration**:  
   - Built on **Etherlink Testnet (Ghostnet)** for **fast, low-cost transactions**  
 
@@ -120,7 +121,7 @@ Thirdweb powers all blockchain interactions for **voting**, **NFT rewards**, and
 - **Top spender** can **claim their exclusive NFT** via  
   `/components/audience/menus/NFTCollections.tsx`
 - **All participants** will **receive reward NFTs via airdrop** handled through the **Thirdweb dashboard**
-
+![NFT Collections](image-4.png)
 ### **Blockchain Config**
 - Update or view **Etherlink chain settings** at `/lib/etherlinkChain.ts`
 

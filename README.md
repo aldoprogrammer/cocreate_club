@@ -29,6 +29,7 @@ All participants in a campaing also receive the NFT reward.
 - **Live Leaderboard Spender**:  
   - Every participants will be listed here  
   - **Pay more** to climb your rank to **win the exlusive NFT reward**
+  - **If campaign status is active** everyone will see the other particpants *total amount is blurry*, till its finish they can see it **(this means to make the experience to win the exclusive NFT as top spender become more exciting and fun)**
 
 ![Leaderboard spender in a campaign](image-2.png)
 

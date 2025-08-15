@@ -19,11 +19,9 @@ All participants in a campaing also receive the NFT reward.
 
 ## Demo Video
 
-![Demo Video Thumbnail](https://img.youtube.com/vi/SnIgB-3fTJI/0.jpg)
-
 Watch the demo video below:
 
-[![Demo Video](https://img.youtube.com/vi/SnIgB-3fTJI/0.jpg)](https://www.youtube.com/watch?v=SnIgB-3fTJI)
+[![Demo Video]](https://www.youtube.com/watch?v=SnIgB-3fTJI)
 
 
 ## Features
